@@ -71,6 +71,9 @@ class Admin implements IDelegatedSettings {
 			'clearBansUrl' => $this->urlGenerator->linkToRoute('cdrive.config.clearProxyBans'),
 			'reinitUrl' => $this->urlGenerator->linkToRoute('cdrive.config.reinit'),
 			'lastReinit' => $this->appConfig->getAppValueInt('last_reinit'),
+			'showDiagnostics' => $this->request->getParam('showDiagnostics', '') === '1',
+			'diagnostics' => $this->request->getParam('showDiagnostics', '') === '1' ? $this->getDiagnostics() : [],
+			'diagnosticsUrl' => $this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive', 'showDiagnostics' => '1']),
 		];
 
 		return new TemplateResponse('cdrive', 'admin', $params);
@@ -149,5 +152,69 @@ class Admin implements IDelegatedSettings {
 			'dependencies' => $info['dependencies'] ?? [],
 			'mentionedBy' => $mentionedBy,
 		];
+	}
+
+	/**
+	 * Read-only App Store diagnostics for administrators. Keep this behind an
+	 * explicit query flag because logs and cache contents can contain URLs or
+	 * other instance-specific information.
+	 *
+	 * @return array{log: list<string>, caches: list<array{path: string, size: int, timestamp: int, ncversion: string, etag: string, count: int, apps: list<array{id: string, name: string, categories: list<string>}>}, error?: string}
+	 */
+	private function getDiagnostics(): array {
+		$dataDirectory = $this->config->getSystemValueString('datadirectory', '');
+		if ($dataDirectory === '' || !is_dir($dataDirectory)) {
+			return ['log' => [], 'caches' => [], 'error' => 'The data directory is not readable.'];
+		}
+
+		$log = [];
+		$logPath = rtrim($dataDirectory, '/') . '/nextcloud.log';
+		if (is_readable($logPath)) {
+			$contents = file_get_contents($logPath, false, null, max(0, (int)filesize($logPath) - 512 * 1024));
+			if (is_string($contents)) {
+				foreach (array_reverse(preg_split('/\R/', trim($contents)) ?: []) as $line) {
+					if (preg_match('/appstore|apps\.nextcloud|appstore-fetcher|cdrive egress|curl error 28/i', $line) === 1) {
+						$log[] = $line;
+						if (count($log) >= 100) {
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		$caches = [];
+		foreach (glob(rtrim($dataDirectory, '/') . '/appdata_*/appstore/apps.json') ?: [] as $path) {
+			$decoded = json_decode((string)file_get_contents($path), true);
+			$data = is_array($decoded) && isset($decoded['data']) && is_array($decoded['data']) ? $decoded['data'] : [];
+			$apps = [];
+			foreach (array_slice($data, 0, 200) as $app) {
+				if (!is_array($app)) {
+					continue;
+				}
+				$categories = [];
+				foreach (($app['categories'] ?? []) as $category) {
+					if (is_string($category)) {
+						$categories[] = $category;
+					}
+				}
+				$apps[] = [
+					'id' => (string)($app['id'] ?? ''),
+					'name' => (string)($app['name'] ?? $app['id'] ?? ''),
+					'categories' => $categories,
+				];
+			}
+			$caches[] = [
+				'path' => $path,
+				'size' => (int)(filesize($path) ?: 0),
+				'timestamp' => (int)($decoded['timestamp'] ?? 0),
+				'ncversion' => (string)($decoded['ncversion'] ?? ''),
+				'etag' => (string)($decoded['ETag'] ?? ''),
+				'count' => count($data),
+				'apps' => $apps,
+			];
+		}
+
+		return ['log' => $log, 'caches' => $caches];
 	}
 }

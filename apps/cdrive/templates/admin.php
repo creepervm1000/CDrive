@@ -22,6 +22,39 @@ script('cdrive', 'admin');
 </div>
 
 <div class="section">
+	<h2><?php p($l->t('App Store diagnostics')); ?></h2>
+	<p><?php p($l->t('Read-only diagnostics for administrators: recent App Store log entries and the cached apps.json summary.')); ?></p>
+	<?php if (!$_['showDiagnostics']) { ?>
+	<a class="button" href="<?php p($_['diagnosticsUrl']); ?>"><?php p($l->t('Show App Store logs and cache')); ?></a>
+	<?php } else {
+		$d = $_['diagnostics'];
+		if (!empty($d['error'])) { ?>
+	<p><strong><?php p($d['error']); ?></strong></p>
+	<?php }
+		if (empty($d['caches'])) { ?>
+	<p><?php p($l->t('No appstore/apps.json cache was found.')); ?></p>
+	<?php } else {
+		foreach ($d['caches'] as $cache) { ?>
+	<h3><code><?php p($cache['path']); ?></code></h3>
+	<p><?php p($l->t('Apps: %s; bytes: %s; cache timestamp: %s; Nextcloud: %s', [(string)$cache['count'], (string)$cache['size'], $cache['timestamp'] > 0 ? date('Y-m-d H:i:s', $cache['timestamp']) : '-', $cache['ncversion'] !== '' ? $cache['ncversion'] : '-'])); ?></p>
+	<table class="grid">
+		<thead><tr><th><?php p($l->t('ID')); ?></th><th><?php p($l->t('Name')); ?></th><th><?php p($l->t('Categories')); ?></th></tr></thead>
+		<tbody><?php foreach ($cache['apps'] as $app) { ?>
+		<tr><td><code><?php p($app['id']); ?></code></td><td><?php p($app['name']); ?></td><td><?php p(implode(', ', $app['categories'])); ?></td></tr>
+		<?php } ?></tbody>
+	</table>
+	<?php }
+		}
+		if (empty($d['log'])) { ?>
+	<p><?php p($l->t('No matching App Store log entries were found.')); ?></p>
+	<?php } else { ?>
+	<h3><?php p($l->t('Recent matching log entries')); ?></h3>
+	<pre style="max-height:32em;overflow:auto;white-space:pre-wrap;"><?php p(implode("\n", $d['log'])); ?></pre>
+	<?php }
+	} ?>
+</div>
+
+<div class="section">
 	<h2><?php p($l->t('CDrive per-app kill switch')); ?></h2>
 	<p><?php p($l->t('One app id per line. A listed app gets no network at all, overriding every allow rule above.')); ?></p>
 	<form action="<?php p($_['saveUrl']); ?>" method="POST">

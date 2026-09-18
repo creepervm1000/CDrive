@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace OCA\Appstore\Controller;
 
 use OC\App\AppStore\Bundles\BundleFetcher;
-use OC\Installer;
 use OCA\AppAPI\Service\ExAppsPageService;
 use OCA\Appstore\AppInfo\Application;
 use OCP\App\IAppManager;
@@ -35,7 +34,6 @@ final class PageController extends Controller {
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IConfig $config,
-		private readonly Installer $installer,
 		private readonly IAppManager $appManager,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IInitialState $initialState,
@@ -52,7 +50,13 @@ final class PageController extends Controller {
 		$this->initialState->provideInitialState('appstoreEnabled', $this->config->getSystemValueBool('appstoreenabled', true));
 		$this->initialState->provideInitialState('appstoreBundles', $this->getBundles());
 		$this->initialState->provideInitialState('appstoreDeveloperDocs', $this->urlGenerator->linkToDocs('developer-manual'));
-		$this->initialState->provideInitialState('appstoreUpdateCount', $this->getUpdatesCount());
+		// Do not refresh the App Store while rendering the page. A stale
+		// apps.json cache can make isUpdateAvailable() wait for the remote
+		// App Store (up to 120 seconds), while PHP-FPM is limited to 30
+		// seconds. That turns an otherwise usable page into a blank 500.
+		// The app list API loads immediately after the page and provides the
+		// update information there.
+		$this->initialState->provideInitialState('appstoreUpdateCount', 0);
 
 		if ($this->appManager->isEnabledForAnyone('app_api')) {
 			try {
@@ -75,11 +79,6 @@ final class PageController extends Controller {
 		Util::addScript(Application::APP_ID, 'main');
 
 		return $templateResponse;
-	}
-
-	private function getUpdatesCount(): int {
-		$apps = $this->appManager->getEnabledApps();
-		return array_reduce($apps, fn (int $carry, string $app): int => $carry + ($this->installer->isUpdateAvailable($app) !== false ? 1 : 0), 0);
 	}
 
 	/**
