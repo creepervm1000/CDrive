@@ -14,18 +14,14 @@
   "author": "Nextcloud GmbH and Nextcloud contributors and CDrive contributors",
   "type": "module",
   "scripts": {
-    "build": "build/demi.sh build",
-    "postbuild": "build/npm-post-build.sh",
-    "dev": "build/demi.sh dev",
-    "postinstall": "build/demi.sh ci",
-    "lint": "eslint --suppressions-location build/eslint-baseline.json --no-error-on-unmatched-pattern ./tests/playwright",
-    "postlint": "build/demi.sh lint",
-    "lint:fix": "concurrently 'npm run lint -- --fix' 'build/demi.sh lint:fix'",
+    "build": "node scripts/run-app-scripts.mjs build",
+    "dev": "node scripts/run-app-scripts.mjs dev --parallel",
+    "lint": "eslint apps --ext .js,.ts,.vue",
+    "lint:fix": "eslint apps --ext .js,.ts,.vue --fix",
     "playwright": "playwright test --project=default --project=admin-settings",
     "playwright:install": "playwright install chromium",
     "playwright:setup": "playwright test --project=setup",
     "sass": "sass --style compressed --load-path core/css core/css/ $(for cssdir in $(find apps -mindepth 2 -maxdepth 2 -name \"css\"); do if ! $(git check-ignore -q $cssdir); then printf \"$cssdir \"; fi; done)",
-    "sass:icons": "node build/icons.mjs",
     "sass:watch": "sass --watch --load-path core/css core/css/ $(for cssdir in $(find apps -mindepth 2 -maxdepth 2 -name \"css\"); do if ! $(git check-ignore -q $cssdir); then printf \"$cssdir \"; fi; done)",
     "stylelint": "stylelint $(for appdir in $(ls apps); do if ! $(git check-ignore -q \"apps/$appdir\"); then printf \"'apps/$appdir/**/*.{scss,vue}' \"; fi; done) 'core/**/*.{scss,vue}'",
     "stylelint:fix": "npm run stylelint -- --fix",
@@ -33,7 +29,7 @@
     "test:coverage": "vitest run --coverage",
     "test:update-snapshots": "vitest run --update",
     "test:watch": "vitest watch",
-    "watch": "build/demi.sh --parallel watch"
+    "watch": "node scripts/run-app-scripts.mjs watch --parallel"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
