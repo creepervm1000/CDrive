@@ -1,0 +1,42 @@
+# Build the frontend explicitly. This avoids Railpack/npm lifecycle hooks from
+# invoking the removed build/demi.sh tooling.
+FROM node:24-bookworm AS assets
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY . .
+RUN npm run build
+
+# The runtime image does not need Node or the frontend build dependencies.
+RUN rm -rf node_modules
+
+FROM dunglas/frankenphp:php8.3.33-trixie
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		libfreetype6-dev \
+		libjpeg62-turbo-dev \
+		libpng-dev \
+		libzip-dev \
+		unzip \
+	&& docker-php-ext-configure gd --with-freetype --with-jpeg \
+	&& docker-php-ext-install -j"$(nproc)" gd zip \
+	&& pecl install apcu \
+	&& docker-php-ext-enable apcu \
+	&& rm -rf /var/lib/apt/lists/* /tmp/pear
+
+WORKDIR /app
+COPY --from=assets /app /app
+
+RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader \
+	&& composer dump-autoload --no-dev --optimize \
+	&& mkdir -p config data custom_apps \
+	&& chown -R www-data:www-data /app
+
+COPY Caddyfile /etc/caddy/Caddyfile
+
+ENV SERVER_NAME="{$PORT:8080}"
+EXPOSE 8080

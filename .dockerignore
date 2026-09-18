@@ -1,0 +1,10 @@
+.git
+.github
+.codex
+.agents
+node_modules
+apps/*/node_modules
+data
+config/config.php
+*.log
+Dockerfile
