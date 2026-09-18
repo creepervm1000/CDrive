@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace OCA\Cdrive\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Services\IAppConfig;
 use OCP\IConfig;
 use OCP\IURLGenerator;
 use OCP\Settings\IDelegatedSettings;
@@ -20,6 +21,7 @@ class Admin implements IDelegatedSettings {
 	public function __construct(
 		protected readonly IConfig $config,
 		protected readonly IURLGenerator $urlGenerator,
+		protected readonly IAppConfig $appConfig,
 	) {
 	}
 
@@ -57,6 +59,8 @@ class Admin implements IDelegatedSettings {
 			'netlog' => is_array($netlog) ? array_slice(array_values($netlog), 0, 100) : [],
 			'saveUrl' => $this->urlGenerator->linkToRoute('cdrive.config.save'),
 			'clearBansUrl' => $this->urlGenerator->linkToRoute('cdrive.config.clearProxyBans'),
+			'reinitUrl' => $this->urlGenerator->linkToRoute('cdrive.config.reinit'),
+			'lastReinit' => $this->appConfig->getAppValueInt('last_reinit'),
 		];
 
 		return new TemplateResponse('cdrive', 'admin', $params);

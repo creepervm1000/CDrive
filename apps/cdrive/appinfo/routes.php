@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-return [
+	return [
 	'routes' => [
 		['name' => 'config#save', 'url' => '/config', 'verb' => 'POST'],
 		['name' => 'config#clearProxyBans', 'url' => '/config/clear-proxy-bans', 'verb' => 'POST'],
+		['name' => 'config#reinit', 'url' => '/config/reinit', 'verb' => 'POST'],
 	]
 ];

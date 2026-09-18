@@ -8,6 +8,20 @@ script('cdrive', 'admin');
 ?>
 
 <div class="section">
+	<h2><?php p($l->t('CDrive instance')); ?></h2>
+	<p><?php p($l->t('Reinit the running instance without touching the host: resets PHP OPcache, flushes APCu, clears the stat cache and regenerates all themed CSS/icons. This does not restart php-fpm or the machine.')); ?></p>
+	<?php if (!empty($_['lastReinit'])) {
+		?>
+	<p><?php p($l->t('Last reinit: %s', date('Y-m-d H:i:s', (int)$_['lastReinit']))); ?></p>
+	<?php
+	} ?>
+	<form action="<?php p($_['reinitUrl']); ?>" method="POST">
+		<input type="hidden" name="requesttoken" value="<?php p($_['requesttoken']) ?>">
+		<input type="submit" class="button primary" value="<?php p($l->t('Reinit instance')); ?>">
+	</form>
+</div>
+
+<div class="section">
 	<h2><?php p($l->t('CDrive network log')); ?></h2>
 	<?php if (!$_['logging']) {
 		?>

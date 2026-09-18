@@ -78,6 +78,8 @@ before it leaves (`lib/private/Http/Client/CdriveEgressGuard.php`):
 - Network log (on by default, capped): every allowed request with
   response status/duration/proxy, and every block with the reason and
   no response attached.
+- Blocks degrade gracefully: denials surface as ordinary connection
+  failures, so callers treat them as "offline" instead of erroring.
 
 ### Per-app forced proxying (anti-tracking)
 - `cdrive_proxy_list`: global pool of HTTP/HTTPS proxy URLs.
@@ -94,8 +96,11 @@ before it leaves (`lib/private/Http/Client/CdriveEgressGuard.php`):
 All of the above is viewable and editable under
 **Administration → CDrive** (enable the `cdrive` app first): firewall
 mode/lists, proxy pool and per-app map with the nuked-proxy list and
-unban button, telemetry opt-ins, and the live network log. The same keys
-also work directly in `config.php`; see `config/config.sample.php`.
+unban button, telemetry opt-ins, the live network log, and a
+**Reinit instance** button (resets OPcache, flushes APCu, clears the
+stat cache and regenerates themed CSS/icons without touching the host).
+The same keys also work directly in `config.php`; see
+`config/config.sample.php`.
 
 ## Installing
 

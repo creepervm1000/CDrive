@@ -43,6 +43,7 @@ declare(strict_types=1);
 namespace OC\Http\Client;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use OCP\Http\Client\LocalServerException;
 use OCP\IConfig;
 use Psr\Http\Message\RequestInterface;
@@ -66,9 +67,25 @@ class CdriveEgressGuard {
 	}
 
 	/**
+	 * Policy denial. Thrown as a Guzzle ConnectException (rather than
+	 * LocalServerException) on purpose: every existing caller already
+	 * treats connection failures as "offline / try later", so a blocked
+	 * request degrades gracefully instead of 500ing. The message still
+	 * says exactly why it was blocked. Blocked requests are logged by
+	 * the caller (see check()) before this is thrown.
+	 */
+	private function denied(string $uri, string $message): ConnectException {
+		if ($uri === '') {
+			$uri = 'http://localhost/';
+		}
+		return new ConnectException($message, new GuzzleRequest('GET', $uri));
+	}
+
+	/**
 	 * Check a single outbound URI. Throws when the request must not leave.
 	 *
-	 * @throws LocalServerException
+	 * @throws ConnectException when blocked by policy (degrades gracefully)
+	 * @throws LocalServerException when no host can be detected at all
 	 */
 	public function check(string $uri): void {
 		$host = parse_url($uri, PHP_URL_HOST);
@@ -81,7 +98,7 @@ class CdriveEgressGuard {
 			if ($this->hostMatches($host, $entry)) {
 				$this->log('CDrive egress denied by denylist', $host, $entry);
 				$this->logBlocked($uri, 'denylist: ' . $entry);
-				throw new LocalServerException('CDrive egress blocked: host "' . $host . '" is denied by cdrive_egress_denylist');
+				throw $this->denied($uri, 'CDrive egress blocked: host "' . $host . '" is denied by cdrive_egress_denylist');
 			}
 		}
 
@@ -113,7 +130,7 @@ class CdriveEgressGuard {
 
 		$this->log('CDrive egress denied by allowlist', $host, $app);
 		$this->logBlocked($uri, 'allowlist: app "' . $app . '" not allowed', $app);
-		throw new LocalServerException('CDrive egress blocked: app "' . $app . '" may not contact host "' . $host . '" (allow it via cdrive_egress_app_allowlist or cdrive_egress_allowed_hosts)');
+		throw $this->denied($uri, 'CDrive egress blocked: app "' . $app . '" may not contact host "' . $host . '" (allow it via cdrive_egress_app_allowlist or cdrive_egress_allowed_hosts)');
 	}
 
 	/**
@@ -271,7 +288,7 @@ class CdriveEgressGuard {
 	/**
 	 * Forced proxy for an app, or null when the app has no proxy configured.
 	 *
-	 * @throws LocalServerException when the app requires a proxy but no
+	 * @throws ConnectException when the app requires a proxy but no
 	 * working proxy is available (fail closed: no direct connection).
 	 */
 	public function getProxyForApp(string $app): ?string {
@@ -292,7 +309,7 @@ class CdriveEgressGuard {
 		if ($spec === true || (is_string($spec) && strtolower($spec) === 'auto')) {
 			$pick = $this->pickRandomProxy();
 			if ($pick === null) {
-				throw new LocalServerException('CDrive: app "' . $app . '" requires a proxy but no working proxy is available (configure cdrive_proxy_list)');
+				throw $this->denied('', 'CDrive: app "' . $app . '" requires a proxy but no working proxy is available (configure cdrive_proxy_list)');
 			}
 			return $pick;
 		}
@@ -303,7 +320,7 @@ class CdriveEgressGuard {
 			}
 			$pick = $this->pickRandomProxy($url);
 			if ($pick === null) {
-				throw new LocalServerException('CDrive: pinned proxy for app "' . $app . '" is nuked and no replacement proxy is available');
+				throw $this->denied('', 'CDrive: pinned proxy for app "' . $app . '" is nuked and no replacement proxy is available');
 			}
 			return $pick;
 		}
