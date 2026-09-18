@@ -12,7 +12,9 @@ namespace OCA\Cdrive\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IAppConfig;
+use OCP\App\IAppManager;
 use OCP\IConfig;
+use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\Settings\IDelegatedSettings;
 
@@ -22,6 +24,8 @@ class Admin implements IDelegatedSettings {
 		protected readonly IConfig $config,
 		protected readonly IURLGenerator $urlGenerator,
 		protected readonly IAppConfig $appConfig,
+		protected readonly IAppManager $appManager,
+		protected readonly IRequest $request,
 	) {
 	}
 
@@ -45,6 +49,7 @@ class Admin implements IDelegatedSettings {
 
 		$params = [
 			'mode' => $this->config->getSystemValueString('cdrive_egress_mode', 'allowlist'),
+			'rulesOff' => $this->config->getSystemValue('cdrive_egress_disabled', false) ? true : false,
 			'allowSelf' => $this->config->getSystemValue('cdrive_egress_allow_self', true) ? true : false,
 			'logging' => $this->config->getSystemValue('cdrive_egress_log', true) ? true : false,
 			'denylist' => implode("\n", $this->stringList('cdrive_egress_denylist')),
@@ -57,7 +62,12 @@ class Admin implements IDelegatedSettings {
 			'proxyFailures' => is_array($failures) ? $failures : [],
 			'proxyBanned' => is_array($banned) ? $banned : [],
 			'netlog' => is_array($netlog) ? array_slice(array_values($netlog), 0, 100) : [],
+			'appDenylist' => implode("\n", $this->stringList('cdrive_egress_app_denylist')),
+			'appBypass' => implode("\n", $this->stringList('cdrive_egress_app_bypass')),
+			'depsQuery' => trim((string)$this->request->getParam('showDeps', '')),
+			'depsResult' => $this->lookupDeps(trim((string)$this->request->getParam('showDeps', ''))),
 			'saveUrl' => $this->urlGenerator->linkToRoute('cdrive.config.save'),
+			'depsUrl' => $this->urlGenerator->linkToRoute('cdrive.config.deps'),
 			'clearBansUrl' => $this->urlGenerator->linkToRoute('cdrive.config.clearProxyBans'),
 			'reinitUrl' => $this->urlGenerator->linkToRoute('cdrive.config.reinit'),
 			'lastReinit' => $this->appConfig->getAppValueInt('last_reinit'),
@@ -102,5 +112,42 @@ class Admin implements IDelegatedSettings {
 			}
 		}
 		return $list;
+	}
+
+	/**
+	 * Dependency info for one app id, or an error string when unknown.
+	 * Includes declared dependencies plus installed apps mentioning it.
+	 *
+	 * @return array{found: bool, error?: string, id?: string, name?: string, version?: string, enabled?: bool, installed?: bool, dependencies?: array, mentionedBy?: list<string>}
+	 */
+	private function lookupDeps(string $appId): array {
+		if ($appId === '') {
+			return ['found' => false];
+		}
+		$info = $this->appManager->getAppInfo($appId);
+		if ($info === null) {
+			return ['found' => false, 'error' => 'Unknown app id: ' . $appId];
+		}
+		$mentionedBy = [];
+		foreach ($this->appManager->getInstalledApps() as $other) {
+			if ($other === $appId) {
+				continue;
+			}
+			$otherInfo = $this->appManager->getAppInfo($other);
+			if ($otherInfo !== null && str_contains(json_encode($otherInfo['dependencies'] ?? []), '"' . $appId . '"')) {
+				$mentionedBy[] = $other;
+			}
+		}
+		sort($mentionedBy);
+		return [
+			'found' => true,
+			'id' => $appId,
+			'name' => $info['name'] ?? $appId,
+			'version' => $this->appManager->getAppVersion($appId),
+			'enabled' => (bool)$this->appManager->isEnabledForUser($appId),
+			'installed' => $this->appManager->isInstalled($appId),
+			'dependencies' => $info['dependencies'] ?? [],
+			'mentionedBy' => $mentionedBy,
+		];
 	}
 }

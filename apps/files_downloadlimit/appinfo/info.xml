@@ -12,7 +12,7 @@
 	<description>This app allows limiting the number of downloads for external link shares.</description>
 	<version>5.3.0</version>
 	<licence>AGPL-3.0-or-later</licence>
-	<author>Nextcloud GmbH and Nextcloud contributors</author>
+	<author>Nextcloud GmbH and Nextcloud contributors and CDrive contributors</author>
 
 	<namespace>Files_DownloadLimit</namespace>
 

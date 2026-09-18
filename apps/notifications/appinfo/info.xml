@@ -22,7 +22,7 @@
 
 	<version>8.0.0</version>
 	<licence>AGPL-3.0-only</licence>
-	<author>Joas Schilling</author>
+	<author>Joas Schilling and CDrive contributors</author>
 
 	<types>
 		<logging/>

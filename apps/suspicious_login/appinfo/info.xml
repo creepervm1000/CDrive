@@ -13,7 +13,7 @@
 	</description>
 	<version>13.0.0</version>
 	<licence>AGPL-3.0-or-later</licence>
-	<author>Christoph Wurst</author>
+	<author>Christoph Wurst and CDrive contributors</author>
 	<namespace>SuspiciousLogin</namespace>
 	<types>
 		<authentication/>

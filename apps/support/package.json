@@ -9,7 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/nextcloud-gmbh/support.git"
   },
-  "author": "Jonas Meurer",
+  "author": "Jonas Meurer and CDrive contributors",
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "@nextcloud/browserslist-config": "^3.0.0",

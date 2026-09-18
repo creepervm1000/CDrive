@@ -13,7 +13,7 @@
 	</description>
 	<version>6.0.0</version>
 	<licence>agpl</licence>
-	<author>Maxence Lange</author>
+	<author>Maxence Lange and CDrive contributors</author>
 	<namespace>RelatedResources</namespace>
 	<documentation>
 		<admin>https://github.com/nextcloud/related_resources/</admin>

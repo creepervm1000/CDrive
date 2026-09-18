@@ -4,7 +4,7 @@
   "private": true,
   "description": "This app provides a backend and frontend for the notification API available in Nextcloud.",
   "license": "AGPL-3.0-only",
-  "author": "Joas Schilling <coding@schilljs.com>",
+  "author": "Joas Schilling <coding@schilljs.com> and CDrive contributors",
   "scripts": {
     "build": "vite build",
     "dev": "vite build --mode development",

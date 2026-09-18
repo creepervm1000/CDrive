@@ -20,7 +20,7 @@
     "url": "git+https://github.com/nextcloud/viewer.git"
   },
   "license": "AGPL-3.0-or-later",
-  "author": "John Molakvoæ <skjnldsv@protonmail.com>",
+  "author": "John Molakvoæ <skjnldsv@protonmail.com> and CDrive contributors",
   "contributors": [
     "John Molakvoæ <skjnldsv@protonmail.com>"
   ],

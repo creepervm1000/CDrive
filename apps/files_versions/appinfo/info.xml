@@ -15,8 +15,8 @@
 	</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Frank Karlitschek</author>
-	<author>Bjoern Schiessle</author>
+	<author>Frank Karlitschek and CDrive contributors</author>
+	<author>Bjoern Schiessle and CDrive contributors</author>
 	<namespace>Files_Versions</namespace>
 	<types>
 		<filesystem/>

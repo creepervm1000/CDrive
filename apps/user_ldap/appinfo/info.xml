@@ -16,8 +16,8 @@ A user logs into Nextcloud with their LDAP or AD credentials, and is granted acc
 	</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Dominik Schmidt</author>
-	<author>Arthur Schiwon</author>
+	<author>Dominik Schmidt and CDrive contributors</author>
+	<author>Arthur Schiwon and CDrive contributors</author>
 	<namespace>User_LDAP</namespace>
 	<types>
 		<authentication/>

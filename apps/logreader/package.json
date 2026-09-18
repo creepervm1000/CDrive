@@ -2,7 +2,7 @@
   "name": "logreader",
   "version": "8.0.0-dev.0",
   "license": "AGPL-3.0-or-later",
-  "author": "Robin Appelman <robin@icewind.nl>",
+  "author": "Robin Appelman <robin@icewind.nl> and CDrive contributors",
   "type": "module",
   "scripts": {
     "build": "vite --mode production build",

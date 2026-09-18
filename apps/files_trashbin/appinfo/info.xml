@@ -16,7 +16,7 @@ To prevent an account from running out of disk space, the Deleted files app will
 	</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Bjoern Schiessle</author>
+	<author>Bjoern Schiessle and CDrive contributors</author>
 	<namespace>Files_Trashbin</namespace>
 	<types>
 		<filesystem/>

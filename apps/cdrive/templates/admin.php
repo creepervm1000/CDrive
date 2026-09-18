@@ -22,6 +22,87 @@ script('cdrive', 'admin');
 </div>
 
 <div class="section">
+	<h2><?php p($l->t('CDrive per-app kill switch')); ?></h2>
+	<p><?php p($l->t('One app id per line. A listed app gets no network at all, overriding every allow rule above.')); ?></p>
+	<form action="<?php p($_['saveUrl']); ?>" method="POST">
+		<input type="hidden" name="requesttoken" value="<?php p($_['requesttoken']) ?>">
+		<input type="hidden" name="mode" value="<?php p($_['mode']); ?>">
+		<input type="hidden" name="allowSelf" value="<?php p($_['allowSelf'] ? 'on' : 'off'); ?>">
+		<input type="hidden" name="logging" value="<?php p($_['logging'] ? 'on' : 'off'); ?>">
+		<input type="hidden" name="denylist" value="<?php p($_['denylist']); ?>">
+		<input type="hidden" name="allowedHosts" value="<?php p($_['allowedHosts']); ?>">
+		<input type="hidden" name="appAllowlist" value="<?php p($_['appAllowlist']); ?>">
+		<input type="hidden" name="proxyList" value="<?php p($_['proxyList']); ?>">
+		<input type="hidden" name="appProxy" value="<?php p($_['appProxy']); ?>">
+		<input type="hidden" name="feedUrl" value="<?php p($_['feedUrl']); ?>">
+		<input type="hidden" name="lookupServer" value="<?php p($_['lookupServer']); ?>">
+		<input type="hidden" name="rulesOff" value="<?php p($_['rulesOff'] ? 'on' : 'off'); ?>">
+		<p>
+			<label for="cdrive-appdeny"><?php p($l->t('Killed apps')); ?></label><br>
+			<textarea id="cdrive-appdeny" name="appDenylist" rows="4" cols="60"><?php p($_['appDenylist']); ?></textarea>
+		</p>
+		<p>
+			<label for="cdrive-appbypass"><?php p($l->t('Exempt apps (full bypass, kill switch still wins)')); ?></label><br>
+			<textarea id="cdrive-appbypass" name="appBypass" rows="4" cols="60"><?php p($_['appBypass']); ?></textarea>
+		</p>
+		<input type="submit" class="button primary" value="<?php p($l->t('Save kill switch')); ?>">
+	</form>
+</div>
+
+<div class="section">
+	<h2><?php p($l->t('CDrive app dependencies')); ?></h2>
+	<form action="<?php p($_['depsUrl']); ?>" method="GET">
+		<input type="hidden" name="requesttoken" value="<?php p($_['requesttoken']) ?>">
+		<p>
+		<p>
+			<label for="cdrive-deps"><?php p($l->t('App id')); ?></label><br>
+			<input id="cdrive-deps" type="text" name="showDeps" size="40" value="<?php p($_['depsQuery']); ?>" placeholder="dav">
+			<input type="submit" class="button" value="<?php p($l->t('Show dependencies')); ?>">
+		</p>
+	</form>
+	<?php if (isset($_['depsResult']['error'])) {
+		?>
+	<p><strong><?php p($_['depsResult']['error']); ?></strong></p>
+	<?php
+	} elseif (!empty($_['depsResult']['found'])) {
+		$d = $_['depsResult']; ?>
+	<ul>
+		<li><?php p($l->t('Name: %s', $d['name'])); ?> (<code><?php p($d['id']); ?></code>)</li>
+		<li><?php p($l->t('Version: %s', $d['version'] ?? '?')); ?></li>
+		<li><?php p($l->t('Enabled: %s', !empty($d['enabled']) ? $l->t('yes') : $l->t('no'))); ?></li>
+		<li><?php p($l->t('Installed: %s', !empty($d['installed']) ? $l->t('yes') : $l->t('no'))); ?></li>
+	</ul>
+	<h3><?php p($l->t('Declared dependencies')); ?></h3>
+	<?php if (empty($d['dependencies'])) {
+		?>
+	<p><?php p($l->t('None declared.')); ?></p>
+	<?php
+	} else {
+		?>
+	<pre><?php p(json_encode($d['dependencies'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); ?></pre>
+	<?php
+	} ?>
+	<h3><?php p($l->t('Mentioned by')); ?></h3>
+	<?php if (empty($d['mentionedBy'])) {
+		?>
+	<p><?php p($l->t('No other installed app references this id.')); ?></p>
+	<?php
+	} else {
+		?>
+	<ul>
+		<?php foreach ($d['mentionedBy'] as $other) {
+			?>
+		<li><code><?php p($other); ?></code></li>
+		<?php
+		} ?>
+	</ul>
+	<?php
+	} ?>
+	<?php
+	} ?>
+</div>
+
+<div class="section">
 	<h2><?php p($l->t('CDrive network log')); ?></h2>
 	<?php if (!$_['logging']) {
 		?>
@@ -74,6 +155,17 @@ script('cdrive', 'admin');
 	<form action="<?php p($_['saveUrl']); ?>" method="POST">
 		<input type="hidden" name="requesttoken" value="<?php p($_['requesttoken']) ?>">
 		<p>
+			<label for="cdrive-rulesoff"><?php p($l->t('Master switch (DANGER: disables every rule)')); ?></label><br>
+			<select id="cdrive-rulesoff" name="rulesOff">
+				<option value="off" <?php if (!$_['rulesOff']) {
+	p('selected');
+} ?>><?php p($l->t('Rules on')); ?></option>
+				<option value="on" <?php if ($_['rulesOff']) {
+	p('selected');
+} ?>><?php p($l->t('RULES OFF - everything allowed')); ?></option>
+			</select>
+		</p>
+		<p>
 			<label for="cdrive-mode"><?php p($l->t('Mode')); ?></label><br>
 			<select id="cdrive-mode" name="mode">
 				<option value="allowlist" <?php if ($_['mode'] === 'allowlist') {
@@ -120,6 +212,7 @@ script('cdrive', 'admin');
 		</p>
 		<input type="hidden" name="proxyList" value="<?php p($_['proxyList']); ?>">
 		<input type="hidden" name="appProxy" value="<?php p($_['appProxy']); ?>">
+		<input type="hidden" name="appBypass" value="<?php p($_['appBypass']); ?>">
 		<input type="hidden" name="feedUrl" value="<?php p($_['feedUrl']); ?>">
 		<input type="hidden" name="lookupServer" value="<?php p($_['lookupServer']); ?>">
 		<input type="submit" class="button primary" value="<?php p($l->t('Save firewall settings')); ?>">
@@ -135,8 +228,11 @@ script('cdrive', 'admin');
 		<input type="hidden" name="denylist" value="<?php p($_['denylist']); ?>">
 		<input type="hidden" name="allowedHosts" value="<?php p($_['allowedHosts']); ?>">
 		<input type="hidden" name="appAllowlist" value="<?php p($_['appAllowlist']); ?>">
+		<input type="hidden" name="appDenylist" value="<?php p($_['appDenylist']); ?>">
 		<input type="hidden" name="logging" value="<?php p($_['logging'] ? 'on' : 'off'); ?>">
 		<input type="hidden" name="allowSelf" value="<?php p($_['allowSelf'] ? 'on' : 'off'); ?>">
+		<input type="hidden" name="rulesOff" value="<?php p($_['rulesOff'] ? 'on' : 'off'); ?>">
+		<input type="hidden" name="appBypass" value="<?php p($_['appBypass']); ?>">
 		<p>
 			<label for="cdrive-proxylist"><?php p($l->t('Global proxy pool (one URL per line)')); ?></label><br>
 			<textarea id="cdrive-proxylist" name="proxyList" rows="4" cols="60" placeholder="http://proxy.internal:8080"><?php p($_['proxyList']); ?></textarea>
@@ -177,10 +273,13 @@ script('cdrive', 'admin');
 		<input type="hidden" name="denylist" value="<?php p($_['denylist']); ?>">
 		<input type="hidden" name="allowedHosts" value="<?php p($_['allowedHosts']); ?>">
 		<input type="hidden" name="appAllowlist" value="<?php p($_['appAllowlist']); ?>">
+		<input type="hidden" name="appDenylist" value="<?php p($_['appDenylist']); ?>">
 		<input type="hidden" name="proxyList" value="<?php p($_['proxyList']); ?>">
 		<input type="hidden" name="appProxy" value="<?php p($_['appProxy']); ?>">
 		<input type="hidden" name="logging" value="<?php p($_['logging'] ? 'on' : 'off'); ?>">
 		<input type="hidden" name="allowSelf" value="<?php p($_['allowSelf'] ? 'on' : 'off'); ?>">
+		<input type="hidden" name="rulesOff" value="<?php p($_['rulesOff'] ? 'on' : 'off'); ?>">
+		<input type="hidden" name="appBypass" value="<?php p($_['appBypass']); ?>">
 		<p>
 			<label for="cdrive-feed"><?php p($l->t('Announcements feed URL')); ?></label><br>
 			<input id="cdrive-feed" type="text" name="feedUrl" size="60" value="<?php p($_['feedUrl']); ?>">

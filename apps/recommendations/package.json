@@ -18,7 +18,7 @@
     "type": "git",
     "url": "git+https://github.com/ChristophWurst/files_recommendation.git"
   },
-  "author": "Christoph Wurst",
+  "author": "Christoph Wurst and CDrive contributors",
   "license": "AGPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/ChristophWurst/files_recommendation/issues"

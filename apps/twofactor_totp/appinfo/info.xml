@@ -11,7 +11,7 @@
 	<description>A two-factor authentication provider for TOTP (RFC 6238)</description>
 	<version>17.1.0</version>
 	<licence>agpl</licence>
-	<author>Christoph Wurst</author>
+	<author>Christoph Wurst and CDrive contributors</author>
 	<namespace>TwoFactorTOTP</namespace>
 	<category>security</category>
 

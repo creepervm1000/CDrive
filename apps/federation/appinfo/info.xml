@@ -12,7 +12,7 @@
 	<description>Federation allows you to connect with other trusted servers to exchange the account directory. For example this will be used to auto-complete external accounts for federated sharing.</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Bjoern Schiessle</author>
+	<author>Bjoern Schiessle and CDrive contributors</author>
 	<namespace>Federation</namespace>
 
 	<types>

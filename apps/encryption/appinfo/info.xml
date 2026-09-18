@@ -32,8 +32,8 @@
 	</description>
 	<version>3.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Bjoern Schiessle</author>
-	<author>Clark Tomlinson</author>
+	<author>Bjoern Schiessle and CDrive contributors</author>
+	<author>Clark Tomlinson and CDrive contributors</author>
 	<types>
 		<filesystem/>
 	</types>

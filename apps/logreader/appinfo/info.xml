@@ -12,8 +12,8 @@
 	<description>Log reader for Nextcloud</description>
 	<version>8.0.0</version>
 	<licence>agpl</licence>
-	<author>Robin Appelman</author>
-	<author>Ferdinand Thiessen</author>
+	<author>Robin Appelman and CDrive contributors</author>
+	<author>Ferdinand Thiessen and CDrive contributors</author>
 	<namespace>LogReader</namespace>
 
 	<types>

@@ -35,22 +35,28 @@ class ConfigController extends Controller {
 
 	#[AuthorizedAdminSetting(settings: Admin::class)]
 	public function save(string $mode = 'allowlist',
+		string $rulesOff = 'off',
 		string $allowSelf = 'on',
 		string $logging = 'on',
 		string $denylist = '',
 		string $allowedHosts = '',
 		string $appAllowlist = '',
+		string $appDenylist = '',
+		string $appBypass = '',
 		string $proxyList = '',
 		string $appProxy = '',
 		string $feedUrl = '',
 		string $lookupServer = ''): RedirectResponse {
 		$mode = strtolower(trim($mode)) === 'denylist' ? 'denylist' : 'allowlist';
 		$this->config->setSystemValue('cdrive_egress_mode', $mode);
+		$this->config->setSystemValue('cdrive_egress_disabled', strtolower(trim($rulesOff)) === 'on');
 		$this->config->setSystemValue('cdrive_egress_allow_self', strtolower(trim($allowSelf)) !== 'off');
 		$this->config->setSystemValue('cdrive_egress_log', strtolower(trim($logging)) !== 'off');
 		$this->config->setSystemValue('cdrive_egress_denylist', self::lines($denylist));
 		$this->config->setSystemValue('cdrive_egress_allowed_hosts', self::lines($allowedHosts));
 		$this->config->setSystemValue('cdrive_egress_app_allowlist', self::lines(strtolower($appAllowlist)));
+		$this->config->setSystemValue('cdrive_egress_app_denylist', self::lines(strtolower($appDenylist)));
+		$this->config->setSystemValue('cdrive_egress_app_bypass', self::lines(strtolower($appBypass)));
 		$this->config->setSystemValue('cdrive_proxy_list', self::lines($proxyList));
 		$this->config->setSystemValue('cdrive_app_proxy', self::mapLines($appProxy));
 		$this->config->setSystemValue('announcements.feed_url', trim($feedUrl));
@@ -60,8 +66,12 @@ class ConfigController extends Controller {
 	}
 
 	#[AuthorizedAdminSetting(settings: Admin::class)]
-	public function clearProxyBans(): RedirectResponse {
-		$this->config->deleteAppValue('cdrive_egress', 'proxy_banned');
+	public function deps(string $showDeps = ''): RedirectResponse {
+		return new RedirectResponse($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive', 'showDeps' => trim($showDeps)])));
+	}
+
+	#[AuthorizedAdminSetting(settings: Admin::class)]
+	public function clearProxyBans(): RedirectResponse {		$this->config->deleteAppValue('cdrive_egress', 'proxy_banned');
 		$this->config->deleteAppValue('cdrive_egress', 'proxy_failures');
 
 		return new RedirectResponse($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive'])));

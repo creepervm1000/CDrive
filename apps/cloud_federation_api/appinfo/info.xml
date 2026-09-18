@@ -11,7 +11,7 @@
 	<description>The Cloud Federation API enables various Nextcloud instances to communicate with each other and to exchange data.</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Bjoern Schiessle</author>
+	<author>Bjoern Schiessle and CDrive contributors</author>
 	<namespace>CloudFederationAPI</namespace>
 	<types>
 		<filesystem/>

@@ -11,7 +11,7 @@
 	<description>Nextcloud settings</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Nextcloud</author>
+	<author>Nextcloud and CDrive contributors</author>
 	<namespace>Settings</namespace>
 
 	<category>customization</category>

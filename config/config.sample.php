@@ -873,6 +873,18 @@ $CONFIG = [
 	 * ``trusted_domains``) are allowed automatically. The denylist still wins
 	 * when both match. Set to ``false`` to treat self like any other host.
 	 *
+	 * ``cdrive_egress_app_denylist`` (default ``[]``): per-app kill switch.
+	 * A listed app id gets no network at all, overriding every allow rule.
+	 * Example: ``['weather_status']``.
+	 *
+	 * ``cdrive_egress_app_bypass`` (default ``[]``): per-app full exemption.
+	 * A listed app skips every rule (denylist included) but never the kill
+	 * switch above. Use sparingly.
+	 *
+	 * ``cdrive_egress_disabled`` (default ``false``): MASTER SWITCH. When
+	 * ``true`` every egress rule above is skipped entirely. Only for
+	 * debugging; everything is allowed.
+	 *
 	 * Defaults: mode ``'allowlist'``, all lists empty (no egress at all).
 	 *
 	 * Network log: ``cdrive_egress_log`` (default ``true``) records every

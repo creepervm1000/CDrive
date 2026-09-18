@@ -24,7 +24,7 @@
     "url": "git+https://github.com/nextcloud/privacy.git",
     "type": "git"
   },
-  "author": "Georg Ehrke",
+  "author": "Georg Ehrke and CDrive contributors",
   "contributors": [
     "John Molakvoæ <skjnldsv@protonmail.com>"
   ],

@@ -8,6 +8,7 @@
 	'routes' => [
 		['name' => 'config#save', 'url' => '/config', 'verb' => 'POST'],
 		['name' => 'config#clearProxyBans', 'url' => '/config/clear-proxy-bans', 'verb' => 'POST'],
+		['name' => 'config#deps', 'url' => '/config/deps', 'verb' => 'GET'],
 		['name' => 'config#reinit', 'url' => '/config/reinit', 'verb' => 'POST'],
 	]
 ];

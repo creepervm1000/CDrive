@@ -12,7 +12,7 @@
     "url": "git+https://github.com/nextcloud/password_policy.git"
   },
   "license": "AGPL-3.0-or-later",
-  "author": "Nextcloud GmbH and Nextcloud contributors",
+  "author": "Nextcloud GmbH and Nextcloud contributors and CDrive contributors",
   "type": "module",
   "scripts": {
     "build": "vite --mode production build",

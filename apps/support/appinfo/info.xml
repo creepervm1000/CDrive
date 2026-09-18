@@ -14,7 +14,7 @@
 	<description>The support app generates local system reports for troubleshooting and links to free community help resources. CDrive has no subscriptions or paywalls; all features are free.</description>
 	<version>7.0.0</version>
 	<licence>AGPL-3.0-or-later</licence>
-	<author>Nextcloud GmbH</author>
+	<author>Nextcloud GmbH and CDrive contributors</author>
 	<namespace>Support</namespace>
 	<types>
 		<session />

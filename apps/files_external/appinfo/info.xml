@@ -16,9 +16,9 @@ External storage can be configured using the GUI or at the command line. This se
 	</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Robin Appelman</author>
-	<author>Michael Gapczynski</author>
-	<author>Vincent Petry</author>
+	<author>Robin Appelman and CDrive contributors</author>
+	<author>Michael Gapczynski and CDrive contributors</author>
+	<author>Vincent Petry and CDrive contributors</author>
 	<namespace>Files_External</namespace>
 
 	<types>

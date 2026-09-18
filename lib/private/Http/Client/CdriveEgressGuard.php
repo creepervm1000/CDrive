@@ -88,11 +88,33 @@ class CdriveEgressGuard {
 	 * @throws LocalServerException when no host can be detected at all
 	 */
 	public function check(string $uri): void {
+		// Master bypass: every security rule off. The admin was warned.
+		if ($this->config->getSystemValue('cdrive_egress_disabled', false) ? true : false) {
+			return;
+		}
 		$host = parse_url($uri, PHP_URL_HOST);
 		if (!is_string($host) || $host === '') {
 			throw new LocalServerException('CDrive egress blocked: could not detect any host');
 		}
 		$host = strtolower(rtrim($host, '.'));
+
+		// Per-app kill switch: a listed app gets no network at all,
+		// regardless of any allow rule below. A bypassed app skips every
+		// rule below (but never the kill switch). Context is detected
+		// lazily so requests pay for a backtrace only when a list is used.
+		$killList = $this->getDomainList('cdrive_egress_app_denylist');
+		$bypassList = $this->getDomainList('cdrive_egress_app_bypass');
+		if ($killList !== [] || $bypassList !== []) {
+			$ctx = $this->detectContext();
+			if (in_array($ctx['app'], $killList, true)) {
+				$this->log('CDrive egress denied by per-app kill switch', $host, $ctx['app']);
+				$this->logTraffic($ctx['method'], $ctx['app'], $uri, 'blocked', null, null, null, 'app kill switch: "' . $ctx['app'] . '"');
+				throw $this->denied($uri, 'CDrive egress blocked: app "' . $ctx['app'] . '" is kill-switched (cdrive_egress_app_denylist)');
+			}
+			if (in_array($ctx['app'], $bypassList, true)) {
+				return;
+			}
+		}
 
 		foreach ($this->getDomainList('cdrive_egress_denylist') as $entry) {
 			if ($this->hostMatches($host, $entry)) {
@@ -185,24 +207,25 @@ class CdriveEgressGuard {
 				if (str_starts_with($class, 'OC\\Http\\Client\\')) {
 					continue;
 				}
-				// OCA\<AppId>\... namespaces map to app ids.
-				if ($app === 'core' && str_starts_with($class, 'OCA\\')) {
-					$parts = explode('\\', $class);
-					if (isset($parts[1]) && $parts[1] !== '') {
-						$app = strtolower($parts[1]);
-					}
-				}
-			} elseif ($app === 'core' && str_starts_with($function, 'OCA\\')) {
-				// Namespaced function call (no class frame).
-				$parts = explode('\\', $function);
-				if (isset($parts[1]) && $parts[1] !== '') {
-					$app = strtolower($parts[1]);
-				}
 			}
 			if ($app === 'core') {
+				// File path first: the app directory is the authoritative
+				// app id (namespaces don't always match it, e.g.
+				// OCA\WeatherStatus lives in apps/weather_status/).
 				$file = $frame['file'] ?? '';
 				if ($file !== '' && preg_match('#/(?:apps|custom_apps|apps-extra)/([^/]+)/#', $file, $m)) {
 					$app = strtolower($m[1]);
+				} elseif ($class !== '' && str_starts_with($class, 'OCA\\')) {
+					// Namespaced class or function call (no class frame).
+					$parts = explode('\\', $class !== '' ? $class : $function);
+					if (isset($parts[1]) && $parts[1] !== '') {
+						$app = strtolower($parts[1]);
+					}
+				} elseif ($class === '' && str_starts_with($function, 'OCA\\')) {
+					$parts = explode('\\', $function);
+					if (isset($parts[1]) && $parts[1] !== '') {
+						$app = strtolower($parts[1]);
+					}
 				}
 			}
 			if ($app !== 'core' && $method !== '') {

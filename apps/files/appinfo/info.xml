@@ -12,9 +12,9 @@
 	<description>File Management</description>
 	<version>3.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>John Molakvoæ</author>
-	<author>Robin Appelman</author>
-	<author>Vincent Petry</author>
+	<author>John Molakvoæ and CDrive contributors</author>
+	<author>Robin Appelman and CDrive contributors</author>
+	<author>Vincent Petry and CDrive contributors</author>
 	<types>
 		<filesystem/>
 	</types>

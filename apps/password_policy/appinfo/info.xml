@@ -12,7 +12,7 @@
 	</description>
 	<version>7.0.0</version>
 	<licence>agpl</licence>
-	<author>Bjoern Schiessle</author>
+	<author>Bjoern Schiessle and CDrive contributors</author>
 	<namespace>Password_Policy</namespace>
 	<types>
 		<authentication/>

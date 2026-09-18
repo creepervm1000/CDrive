@@ -12,8 +12,8 @@
 	<description>Provide federated file sharing across servers</description>
 	<version>2.0.0-dev.1</version>
 	<licence>agpl</licence>
-	<author>Bjoern Schiessle</author>
-	<author>Roeland Jago Douma</author>
+	<author>Bjoern Schiessle and CDrive contributors</author>
+	<author>Roeland Jago Douma and CDrive contributors</author>
 	<namespace>FederatedFileSharing</namespace>
 	<category>files</category>
 	<category>social</category>

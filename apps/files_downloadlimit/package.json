@@ -19,7 +19,7 @@
     "url": "https://github.com/nextcloud/files_downloadlimit"
   },
   "license": "AGPL-3.0-or-later",
-  "author": "Nextcloud GmbH and Nextcloud contributors",
+  "author": "Nextcloud GmbH and Nextcloud contributors and CDrive contributors",
   "type": "module",
   "scripts": {
     "build": "vite build --mode production",

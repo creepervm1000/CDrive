@@ -17,7 +17,7 @@ Note: to use the `File reminders` app, ensure that the `Notifications` app is in
 	]]></description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Christopher Ng</author>
+	<author>Christopher Ng and CDrive contributors</author>
 	<namespace>FilesReminders</namespace>
 
 	<category>files</category>

@@ -11,9 +11,9 @@
 	<description>Nextcloud workflow engine</description>
 	<version>3.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Arthur Schiwon</author>
-	<author>Julius Härtl</author>
-	<author>Morris Jobke</author>
+	<author>Arthur Schiwon and CDrive contributors</author>
+	<author>Julius Härtl and CDrive contributors</author>
+	<author>Morris Jobke and CDrive contributors</author>
 	<namespace>WorkflowEngine</namespace>
 
 	<types>

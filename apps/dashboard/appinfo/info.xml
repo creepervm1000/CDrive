@@ -14,7 +14,7 @@ The Nextcloud Dashboard is your starting point of the day, giving you an overvie
 	</description>
 	<version>8.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Julius Härtl</author>
+	<author>Julius Härtl and CDrive contributors</author>
 	<namespace>Dashboard</namespace>
 
 	<category>customization</category>

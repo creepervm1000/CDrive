@@ -17,8 +17,8 @@
 
 	<version>7.0.0</version>
 	<licence>AGPL-3.0-or-later</licence>
-	<author>Björn Schiessle</author>
-	<author>Joas Schilling</author>
+	<author>Björn Schiessle and CDrive contributors</author>
+	<author>Joas Schilling and CDrive contributors</author>
 
 	<namespace>Survey_Client</namespace>
 

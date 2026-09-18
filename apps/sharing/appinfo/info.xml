@@ -11,7 +11,7 @@
 	<description>TODO</description>
 	<version>1.0.4</version>
 	<licence>AGPL-3.0-or-later</licence>
-	<author>Kate Döen</author>
+	<author>Kate Döen and CDrive contributors</author>
 	<namespace>Sharing</namespace>
 	<category>customization</category>
 	<bugs>https://github.com/nextcloud/server/issues</bugs>

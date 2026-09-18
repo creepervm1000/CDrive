@@ -11,7 +11,7 @@
 	<description>A two-factor auth backup codes provider</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Christoph Wurst</author>
+	<author>Christoph Wurst and CDrive contributors</author>
 	<namespace>TwoFactorBackupCodes</namespace>
 	<category>integration</category>
 	<category>security</category>

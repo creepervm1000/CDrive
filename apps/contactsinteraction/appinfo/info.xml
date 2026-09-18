@@ -11,7 +11,7 @@
 	<description>Collect data about accounts and contacts interactions and provide an address book for the data</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Christoph Wurst</author>
+	<author>Christoph Wurst and CDrive contributors</author>
 	<author homepage="https://github.com/nextcloud/groupware">Nextcloud Groupware Team</author>
 	<namespace>ContactsInteraction</namespace>
 	<types>

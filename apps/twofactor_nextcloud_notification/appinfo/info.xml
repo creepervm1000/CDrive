@@ -11,9 +11,9 @@
 	<version>9.0.0</version>
 	<licence>AGPL-3.0-or-later</licence>
 
-	<author>Joas Schilling</author>
-	<author>Roeland Jago Douma</author>
-	<author>Christoph Wurst</author>
+	<author>Joas Schilling and CDrive contributors</author>
+	<author>Roeland Jago Douma and CDrive contributors</author>
+	<author>Christoph Wurst and CDrive contributors</author>
 
 	<namespace>TwoFactorNextcloudNotification</namespace>
 	<category>security</category>

@@ -11,7 +11,7 @@
 	<description>The OAuth2 app allows administrators to configure the built-in authentication workflow to also allow OAuth2 compatible authentication from other web applications.</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Lukas Reschke</author>
+	<author>Lukas Reschke and CDrive contributors</author>
 	<namespace>OAuth2</namespace>
 	<types>
 		<authentication/>

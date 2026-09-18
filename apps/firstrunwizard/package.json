@@ -4,7 +4,7 @@
   "private": true,
   "description": "A first run wizard that explains the usage of Nextcloud to new users",
   "license": "AGPL-3.0-or-later",
-  "author": "Julius Härtl <jus@bitgrid.net>",
+  "author": "Julius Härtl <jus@bitgrid.net> and CDrive contributors",
   "type": "module",
   "scripts": {
     "build": "vite --mode production build",

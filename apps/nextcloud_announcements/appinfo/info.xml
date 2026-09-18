@@ -11,7 +11,7 @@
 	<description>Nextcloud announcements brings the latest news of Nextcloud into your notifications</description>
 	<version>7.0.0</version>
 	<licence>AGPL-3.0-or-later</licence>
-	<author>Joas Schilling</author>
+	<author>Joas Schilling and CDrive contributors</author>
 	<namespace>NextcloudAnnouncements</namespace>
 
 	<types>

@@ -2,7 +2,7 @@
   "name": "files_pdfviewer",
   "description": "PDF viewer plugin for Nextcloud",
   "version": "8.0.0-dev.0",
-  "author": "John Molakvoæ <skjnldsv@protonmail.com>",
+  "author": "John Molakvoæ <skjnldsv@protonmail.com> and CDrive contributors",
   "contributors": [],
   "bugs": {
     "url": "https://github.com/nextcloud/files_pdfviewer/issues"

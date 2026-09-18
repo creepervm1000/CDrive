@@ -15,8 +15,8 @@ The First run wizard can be customized to meet specific design goals, or to chan
 
 	<version>8.0.0</version>
 	<licence>AGPL-3.0-or-later</licence>
-	<author>Frank Karlitschek</author>
-	<author>Jan-Christoph Borchardt</author>
+	<author>Frank Karlitschek and CDrive contributors</author>
+	<author>Jan-Christoph Borchardt and CDrive contributors</author>
 
 	<namespace>FirstRunWizard</namespace>
 

@@ -13,8 +13,8 @@
 	(If you are a provider with a multi-tenancy installation, it is advised to deactivate this app as tags are shared.)</description>
 	<version>2.0.0-dev.0</version>
 	<licence>agpl</licence>
-	<author>Vincent Petry</author>
-	<author>Joas Schilling</author>
+	<author>Vincent Petry and CDrive contributors</author>
+	<author>Joas Schilling and CDrive contributors</author>
 	<namespace>SystemTags</namespace>
 	<types>
 		<logging/>
