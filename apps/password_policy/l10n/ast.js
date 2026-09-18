@@ -1,0 +1,25 @@
+OC.L10N.register(
+    "password_policy",
+    {
+    "Password is expired, please use forgot password method to reset" : "La contraseña caducó, usa'l métodu de contraseñes escaecíes pa reafitala",
+    "Password must not have been used recently before." : "La contraseña nun hebo usase con anterioridá.",
+    "Password is among the 1,000,000 most common ones. Please make it unique." : "La contraseña ta ente'l 1000000 más frecuente. Crea una contraseña única.",
+    "Password is present in compromised password list. Please choose a different password." : "La contraseña ta presente nuna llista de contraseñes comprometíes. Escueyi otra.",
+    "Password needs to be at least %s characters long." : "La contraseña tien de ser de polo menos %s de llongura.",
+    "Password needs to contain at least one numeric character." : "La contraseña tien de contener polo menos un caráuter numbéricu.",
+    "Password needs to contain at least one special character." : "La contraseña tien de contener polo menos un caráuter especial.",
+    "Password needs to contain at least one lower and one upper case character." : "La contraseña tien de contener polo menos un caráuter en minúscula y otru en mayúscula.",
+    "Password policy" : "Política de les contraseñes",
+    "Allows admins to configure a password policy" : "Permite a l'alministración configurar una política pa les contraseñes",
+    "Allow admin to define certain pre-conditions for password, e.g. enforce a minimum length" : "Permite a l'alministración definir ciertos criterios pa les contraseñes, como afitar una llongura mínima.",
+    "Number of login attempts before the user account will be disabled until manual action is taken. (0 for no limit)" : "El númberu d'intentos p'aniciar la sesión enantes de que la cuenta del usuariu se desactive hasta que faiga una aición manual (0 pa nun tener llende)",
+    "Number of days until user password expires" : "Númberu de díes hasta que la contraseña del usuariu caduque",
+    "Minimum password length" : "Llongura mínima de la contraseña",
+    "Forbid common passwords" : "Prohibir les contraseñes habituales",
+    "Enforce upper and lower case characters" : "Obligar a poner mayúscules y minúscules",
+    "Enforce numeric characters" : "Obligar a poner númberos",
+    "Enforce special characters" : "Obligar a poner caráuteres especiales",
+    "Check password against the list of breached passwords from haveibeenpwned.com" : "Comprueba la contraseña na llista de contraseñes comprometíes de haveibeenpwned.com",
+    "This check creates a hash of the password and sends the first 5 characters of this hash to the haveibeenpwned.com API to retrieve a list of all hashes that start with those. Then it checks on the Nextcloud instance if the password hash is in the result set." : "Esta comprobación crea un hash de la contraseña y unvia los primeros 5 caráuteres a l'API de haveibeenpwned.com pa recuperar una llista de tolos hashes que comiencen per estos caráuteres. Dempués, comprueba na instancia de Nextcloud si'l hash de la contraseña ta nel conxuntu de resultaos."
+},
+"nplurals=2; plural=(n != 1);");

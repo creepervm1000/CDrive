@@ -1,0 +1,417 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2021 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Circles\Service;
+
+use OCA\Circles\Db\CircleRequest;
+use OCA\Circles\Db\MemberRequest;
+use OCA\Circles\Db\MembershipRequest;
+use OCA\Circles\Exceptions\FederatedUserNotFoundException;
+use OCA\Circles\Exceptions\MembershipNotFoundException;
+use OCA\Circles\Exceptions\OwnerNotFoundException;
+use OCA\Circles\Exceptions\RequestBuilderException;
+use OCA\Circles\Model\Circle;
+use OCA\Circles\Model\FederatedUser;
+use OCA\Circles\Model\Member;
+use OCA\Circles\Model\Membership;
+use OCA\Circles\Tools\Exceptions\ItemNotFoundException;
+use OCA\Circles\Tools\Traits\TNCLogger;
+
+/**
+ * Class MembershipService
+ *
+ * @package OCA\Circles\Service
+ */
+class MembershipService {
+	use TNCLogger;
+
+	/**
+	 * MembershipService constructor.
+	 *
+	 * @param MembershipRequest $membershipRequest
+	 * @param CircleRequest $circleRequest
+	 * @param MemberRequest $memberRequest
+	 * @param EventService $eventService
+	 * @param ShareWrapperService $shareWrapperService
+	 * @param OutputService $outputService
+	 */
+	public function __construct(
+		private MembershipRequest $membershipRequest,
+		private CircleRequest $circleRequest,
+		private MemberRequest $memberRequest,
+		private EventService $eventService,
+		private ShareWrapperService $shareWrapperService,
+		private OutputService $outputService,
+	) {
+	}
+
+	/**
+	 * @param string $singleId
+	 *
+	 * @throws RequestBuilderException
+	 */
+	public function onUpdate(string $singleId): void {
+		if ($singleId === '') {
+			return;
+		}
+
+		try {
+			$this->circleRequest->getFederatedUserBySingleId($singleId);
+		} catch (FederatedUserNotFoundException|OwnerNotFoundException) {
+			$this->membershipRequest->removeBySingleId($singleId);
+		}
+
+		$children = array_unique(
+			array_merge(
+				[$singleId],
+				$this->getChildrenMembers($singleId),
+				$this->getChildrenMemberships($singleId)
+			)
+		);
+
+		foreach ($children as $singleId) {
+			$this->manageMemberships($singleId);
+		}
+	}
+
+	/**
+	 * @param string $singleId
+	 *
+	 * @return int
+	 * @throws RequestBuilderException
+	 */
+	public function manageMemberships(string $singleId): int {
+		$memberships = $this->generateMemberships($singleId);
+
+		return $this->updateMembershipsDatabase($singleId, $memberships);
+	}
+
+	/**
+	 * @param string $circleId
+	 * @param string $singleId
+	 * @param bool $detailed
+	 *
+	 * @return Membership
+	 * @throws MembershipNotFoundException
+	 * @throws RequestBuilderException
+	 */
+	public function getMembership(string $circleId, string $singleId, bool $detailed = false): Membership {
+		$membership = $this->membershipRequest->getMembership($circleId, $singleId);
+		if ($detailed) {
+			$details = $this->circleRequest->getCirclesByIds($membership->getInheritancePath());
+			$membership->setInheritanceDetails($details);
+		}
+
+		return $membership;
+	}
+
+	/**
+	 * @param string $singleId
+	 * @param bool $all
+	 */
+	public function resetMemberships(string $singleId = '', bool $all = false) {
+		$this->membershipRequest->removeBySingleId($singleId, $all);
+	}
+
+	/**
+	 * @param FederatedUser $federatedUser
+	 */
+	public function deleteFederatedUser(FederatedUser $federatedUser) {
+		$this->membershipRequest->deleteFederatedUser($federatedUser);
+	}
+
+	/**
+	 * @param string $singleId
+	 * @param string $circleId
+	 * @param array $memberships
+	 * @param array $knownIds
+	 * @param array $path
+	 *
+	 * @return array
+	 * @throws RequestBuilderException
+	 */
+	private function generateMemberships(
+		string $singleId,
+		string $circleId = '',
+		array &$memberships = [],
+		array $knownIds = [],
+		array $path = [],
+	): array {
+		$circleId = ($circleId === '') ? $singleId : $circleId;
+		$path[] = $circleId;
+		$knownIds[] = $circleId;
+
+		$members = $this->memberRequest->getMembersBySingleId($circleId);
+		foreach ($members as $member) {
+			if (!$member->hasCircle() || $member->getLevel() < Member::LEVEL_MEMBER) {
+				continue;
+			}
+
+			if ($member->getCircle()->isConfig(Circle::CFG_NO_OWNER)
+				&& $member->getLevel() === Member::LEVEL_OWNER) {
+				continue;
+			}
+
+			$membership = new Membership($singleId, count($path) > 1 ? $path[1] : '', $member);
+			$membership->setInheritancePath(array_reverse($path))
+				->setInheritanceDepth(sizeof($path));
+			$this->fillMemberships($membership, $memberships);
+			if (!in_array($member->getCircleId(), $knownIds)) {
+				$this->generateMemberships(
+					$singleId,
+					$member->getCircleId(),
+					$memberships,
+					$knownIds,
+					$path
+				);
+			}
+		}
+
+		return $memberships;
+	}
+
+	/**
+	 * @param string $singleId
+	 * @param Membership[] $memberships
+	 *
+	 * @return int
+	 */
+	private function updateMembershipsDatabase(string $singleId, array $memberships): int {
+		$known = $this->membershipRequest->getMemberships($singleId);
+
+		$deprecated = $this->removeDeprecatedMemberships($memberships, $known);
+		if (!empty($deprecated)) {
+			$this->eventService->membershipsRemoved($deprecated);
+		}
+
+		$new = $this->createNewMemberships($memberships, $known);
+		if (!empty($new)) {
+			$this->eventService->membershipsCreated($new);
+		}
+
+		return count($deprecated) + count($new);
+	}
+
+	/**
+	 * @param string $id
+	 * @param array $knownIds
+	 *
+	 * @return array
+	 * @throws RequestBuilderException
+	 */
+	private function getChildrenMembers(string $id, array &$knownIds = []): array {
+		$singleIds = array_map(
+			fn (Member $item): string => $item->getSingleId(),
+			$this->memberRequest->getMembers($id)
+		);
+
+		foreach ($singleIds as $singleId) {
+			if ($singleId !== $id && !in_array($singleId, $knownIds)) {
+				$knownIds[] = $singleId;
+				$singleIds = array_merge($singleIds, $this->getChildrenMembers($singleId, $knownIds));
+			}
+		}
+
+		return array_unique($singleIds);
+	}
+
+	/**
+	 * @param string $id
+	 * @param array $knownIds
+	 *
+	 * @return array
+	 */
+	private function getChildrenMemberships(string $id, array &$knownIds = []): array {
+		$singleIds = array_map(
+			fn (Membership $item): string => $item->getSingleId(),
+			$this->membershipRequest->getInherited($id)
+		);
+
+		foreach ($singleIds as $singleId) {
+			if ($singleId !== $id && !in_array($singleId, $knownIds)) {
+				$knownIds[] = $singleId;
+				$singleIds = array_merge($singleIds, $this->getChildrenMemberships($singleId, $knownIds));
+			}
+		}
+
+		return array_unique($singleIds);
+	}
+
+	/**
+	 * Add the new membership if unknown or Update known membership if:
+	 *  - new membership comes with more power
+	 *  - level is the same, but inheritance is shorter
+	 *
+	 * @param Membership $membership
+	 * @param Membership[] $memberships
+	 */
+	private function fillMemberships(Membership $membership, array &$memberships) {
+		foreach ($memberships as $known) {
+			if ($known->getCircleId() === $membership->getCircleId()) {
+				if ($known->getLevel() < $membership->getLevel()
+					|| ($known->getLevel() === $membership->getLevel()
+						&& $known->getInheritanceDepth() > $membership->getInheritanceDepth())
+				) {
+					$known->setLevel($membership->getLevel());
+					$known->setInheritanceFirst($membership->getInheritanceFirst());
+					$known->setInheritanceLast($membership->getInheritanceLast());
+					$known->setInheritanceDepth($membership->getInheritanceDepth());
+					$known->setInheritancePath($membership->getInheritancePath());
+				}
+
+				return;
+			}
+		}
+
+		$memberships[$membership->getCircleId()] = $membership;
+	}
+
+	/**
+	 * @param Membership[] $memberships
+	 * @param Membership[] $known
+	 *
+	 * @return Membership[]
+	 */
+	private function removeDeprecatedMemberships(array $memberships, array $known): array {
+		$circleIds = array_map(
+			fn (Membership $membership): string => $membership->getCircleId(),
+			$memberships
+		);
+
+		$deprecated = [];
+		$clear = [];
+		foreach ($known as $item) {
+			if (!in_array($item->getCircleId(), $circleIds)) {
+				$deprecated[] = $item;
+				$this->membershipRequest->delete($item);
+
+				if (!in_array($item->getSingleId(), $clear, true)) {
+					$clear[] = $item->getSingleId();
+				}
+			}
+		}
+
+		$this->shareWrapperService->clearCacheList($clear);
+
+		return $deprecated;
+	}
+
+	/**
+	 * @param Membership[] $memberships
+	 * @param Membership[] $known
+	 *
+	 * @return Membership[]
+	 */
+	private function createNewMemberships(array $memberships, array $known): array {
+		$new = [];
+		$clear = [];
+		foreach ($memberships as $membership) {
+			$updated = false;
+			try {
+				$item = $this->getMembershipsFromList($known, $membership->getCircleId());
+				if ($item->getLevel() !== $membership->getLevel()
+					|| $item->getInheritanceDepth() !== $membership->getInheritanceDepth()) {
+					$this->membershipRequest->update($membership);
+					$new[] = $item;
+					$updated = true;
+				} elseif ($item->getInheritancePath() !== $membership->getInheritancePath()) {
+					$this->membershipRequest->update($membership);
+					$updated = true;
+				}
+			} catch (ItemNotFoundException) {
+				$this->membershipRequest->insert($membership);
+				$new[] = $membership;
+			}
+
+			if ($updated && !in_array($membership->getSingleId(), $clear, true)) {
+				$clear[] = $membership->getSingleId();
+			}
+		}
+
+		$this->shareWrapperService->clearCacheList($clear);
+
+		return $new;
+	}
+
+	/**
+	 * @param Membership[] $list
+	 * @param string $circleId
+	 *
+	 * @return Membership
+	 * @throws ItemNotFoundException
+	 */
+	private function getMembershipsFromList(array $list, string $circleId): Membership {
+		foreach ($list as $item) {
+			if ($item->getCircleId() === $circleId) {
+				return $item;
+			}
+		}
+
+		throw new ItemNotFoundException();
+	}
+
+	/**
+	 * Get all circles that contain a given circle as a member
+	 *
+	 * @param Circle $circle
+	 *
+	 * @return list<Circle>
+	 */
+	public function getParentCircles(Circle $circle): array {
+		$memberships = $this->membershipRequest->getMemberships($circle->getSingleId());
+		$parentCircles = [];
+		foreach ($memberships as $membership) {
+			$parentCircles[] = $this->circleRequest->getCircle($membership->getCircleId());
+		}
+
+		return $parentCircles;
+	}
+
+	/**
+	 * Update population counts for a given circle and all circles that contain it as a member
+	 *
+	 * @param Circle $circle
+	 */
+	public function updatePopulation(Circle $circle): void {
+		$this->calculateAndSavePopulation($circle);
+
+		$parentCircles = $this->getParentCircles($circle);
+		foreach ($parentCircles as $parentCircle) {
+			$this->calculateAndSavePopulation($parentCircle);
+		}
+	}
+
+	/**
+	 * Calculate and save population counts for a given circle
+	 *
+	 * population: direct member count (excluding nested circles)
+	 * populationInherited: total member count (direct + inherited from nested circles)
+	 *
+	 * @param Circle $circle
+	 */
+	private function calculateAndSavePopulation(Circle $circle): void {
+		$population = $populationInherited = 0;
+
+		$memberships = $this->membershipRequest->getInheritedExcludingCircles(
+			$circle->getSingleId(),
+			Member::LEVEL_MEMBER
+		);
+		foreach ($memberships as $membership) {
+			$populationInherited++;
+			if ($membership->getInheritanceDepth() === 1) {
+				$population++;
+			}
+		}
+
+		$settings = $circle->getSettings();
+		$settings['population'] = $population;
+		$settings['populationInherited'] = $populationInherited;
+		$this->circleRequest->updateSettings($circle->setSettings($settings));
+	}
+}

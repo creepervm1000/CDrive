@@ -1,0 +1,28 @@
+OC.L10N.register(
+    "serverinfo",
+    {
+    "System" : "පද්ධතිය",
+    "Warning" : "අවවාදයයි",
+    "Host" : " ධාරකය",
+    "User" : "පරිශීලක",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Close" : "වසන්න",
+    "Available" : "ඇත",
+    "Files" : "ගොනු",
+    "Duration" : "කාල සීමාව",
+    "Authentication" : "සත්‍යාපනය",
+    "Hostname" : "ධාරක නාමය",
+    "Disabled" : "අබල කර ඇත",
+    "No" : "නැහැ",
+    "Unlimited" : "අසීමිත",
+    "Version" : "අනුවාදය",
+    "Shares" : "බෙදාගැනීම්",
+    "All" : "සියල්ල",
+    "Copied!" : "පිටපත් කළා!",
+    "Not supported!" : "සහාය නොදක්වයි!",
+    "Press ⌘-C to copy." : "පිටපත් කිරීමට ⌘-C ඔබන්න.",
+    "Press Ctrl-C to copy." : "පිටපත් කිරීමට Ctrl-C ඔබන්න.",
+    "Copy" : "පිටපත්"
+},
+"nplurals=2; plural=(n != 1);");

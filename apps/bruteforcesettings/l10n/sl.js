@@ -1,0 +1,12 @@
+OC.L10N.register(
+    "bruteforcesettings",
+    {
+    "Brute-force settings" : "Nastavitve preprečevanja nasilnega vdora",
+    "Whitelist IPs" : "Beli seznam naslovov IP",
+    "IP address" : "Naslov IP",
+    "Mask" : "Maska",
+    "Comment" : "Opomba",
+    "Add" : "Dodaj",
+    "Save" : "Shrani"
+},
+"nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);");

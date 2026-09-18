@@ -1,0 +1,45 @@
+{
+	"name": "nextcloud/firstrunwizard",
+	"description": "The Nextcloud firstrunwizard",
+	"license": "AGPL-3.0-or-later",
+	"config": {
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"platform": {
+			"php": "8.3"
+		},
+		"allow-plugins": {
+			"bamarni/composer-bin-plugin": true
+		}
+	},
+	 "extra": {
+		"bamarni-bin": {
+			"bin-links": true,
+			"forward-command": true
+		}
+	},
+	"require-dev": {
+		"bamarni/composer-bin-plugin": "^1.8"
+	},
+	"scripts": {
+		"lint": "find . -name \\*.php -not -path './vendor/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
+		"cs:check": "php-cs-fixer fix --dry-run --diff",
+		"cs:fix": "php-cs-fixer fix",
+		"psalm": "psalm --no-cache --threads=$(nproc)",
+		"test:unit": "vendor/bin/phpunit --color --fail-on-warning -c tests/phpunit.xml",
+		"rector": "rector && composer cs:fix",
+		"post-install-cmd": [
+			"[ $COMPOSER_DEV_MODE -eq 0 ] || composer bin all install --ansi",
+			"composer dump-autoload"
+		],
+		"post-update-cmd": [
+			"[ $COMPOSER_DEV_MODE -eq 0 ] || composer bin all install --ansi",
+			"composer dump-autoload"
+		]
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"OCP\\": "vendor/nextcloud/ocp/OCP"
+		}
+	}
+}

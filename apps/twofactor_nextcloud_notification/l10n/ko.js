@@ -1,0 +1,19 @@
+OC.L10N.register(
+    "twofactor_nextcloud_notification",
+    {
+    "TwoFactor Nextcloud notification" : "Nextcloud 2단계 인증 알림",
+    "Approve" : "승인",
+    "Cancel" : "취소",
+    "Login attempt from IP address {ip}" : "IP 주소 {ip}로부터의 로그인 시도",
+    "If you are currently trying log in from another device or browser please approve the request. If you are not trying to log in at the moment, you should use the cancel option to abort the login attempt." : "현재 다른 기기나 브라우저에서 로그인을 시도 중이라면 요청을 승인해 주십시오. 만약 귀하의 로그인 시도가 아니라면, 취소 옵션을 이용해 로그인 시도를 차단해 주세요.",
+    "Nextcloud Notification" : "Nextcloud 알림",
+    "Authenticate using a device that is already logged in to your account" : "로그인한 장치로 인증하기",
+    "Two-Factor Authentication via Nextcloud notification" : "Nextcloud 알림을 통한 2단계 인증",
+    "Allows using any of your logged in devices as second factor" : "로그인한 다른 장치를 2단계 인증으로 사용하기 허용",
+    "Please accept the request on one of your logged in devices." : "로그인한 다른 장치에서 요청을 수락해 주십시오.",
+    "You will be redirected automatically once this login has been accepted." : "로그인이 수락되면 자동으로 전환됩니다.",
+    "Your login attempt was rejected." : "내 로그인 시도가 거부되었습니다.",
+    "Use two-factor authentication via Nextcloud notifications" : "Nextcloud 알림을 통해 2단계 인증 사용하기",
+    "Please wait …" : "잠시 기다리세요…"
+},
+"nplurals=1; plural=0;");

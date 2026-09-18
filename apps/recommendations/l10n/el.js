@@ -1,0 +1,15 @@
+OC.L10N.register(
+    "recommendations",
+    {
+    "Recommended files" : "Προτεινόμενα αρχεία",
+    "Recommendations" : "Συστάσεις",
+    "Shows recommended files" : "Εμφάνιση προτεινόμενων αρχείων",
+    "Shows recommended files for quick access of files and folders with recent activity" : "Εμφανίζει τα συνιστώμενα αρχεία για γρήγορη πρόσβαση αρχείων και φακέλων με πρόσφατη δραστηριότητα",
+    "No recommendations yet" : "Δεν υπάρχουν προτάσεις ακόμα",
+    "Last updated {timeAgo}" : "Τελευταία ενημέρωση {timeAgo}",
+    "Shared with you {timeAgo}" : "Κοινοποιήθηκε μαζί σας {timeAgo}",
+    "Last commented on {timeAgo}" : "Τελευταίο σχόλιο {timeAgo}",
+    "Path name {path}" : "Ονομασία διαδρομής {path}",
+    "Show recommendations" : "Εμφάνιση προτεινόμενων"
+},
+"nplurals=2; plural=(n != 1);");

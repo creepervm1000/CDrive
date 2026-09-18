@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  - SPDX-FileCopyrightText: 2019 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>files_lock</id>
+	<name>Temporary files lock</name>
+	<summary>Temporary lock your files</summary>
+	<description><![CDATA[
+
+Allow your users to temporary lock their files to avoid conflicts while working on shared files.
+
+]]>
+	</description>
+	<version>35.0.0</version>
+	<licence>AGPL-3.0-or-later</licence>
+	<author>Maxence Lange</author>
+	<namespace>FilesLock</namespace>
+	<types>
+		<filesystem/>
+		<dav/>
+	</types>
+	<documentation>
+		<admin>https://github.com/nextcloud/files_lock/blob/main/README.md</admin>
+	</documentation>
+	<category>tools</category>
+	<category>files</category>
+
+	<website>https://github.com/nextcloud/files_lock</website>
+	<bugs>https://github.com/nextcloud/files_lock/issues</bugs>
+	<repository>https://github.com/nextcloud/files_lock.git</repository>
+	<screenshot>https://raw.githubusercontent.com/nextcloud/files_lock/main/screenshots/0.7.0.png</screenshot>
+
+	<dependencies>
+		<nextcloud min-version="35" max-version="35"/>
+	</dependencies>
+
+	<background-jobs>
+		<job>OCA\FilesLock\Cron\Unlock</job>
+	</background-jobs>
+
+	<commands>
+		<command>OCA\FilesLock\Command\Lock</command>
+	</commands>
+
+	<sabre>
+		<plugins>
+			<plugin>OCA\FilesLock\DAV\LockPlugin</plugin>
+		</plugins>
+	</sabre>
+</info>

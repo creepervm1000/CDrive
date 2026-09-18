@@ -1,0 +1,52 @@
+{
+  "name": "logreader",
+  "version": "8.0.0-dev.0",
+  "license": "AGPL-3.0-or-later",
+  "author": "Robin Appelman <robin@icewind.nl>",
+  "type": "module",
+  "scripts": {
+    "build": "vite --mode production build",
+    "dev": "vite --mode development build",
+    "dev:watch": "vite --mode development build --watch",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "test": "TZ='Etc/GMT+1' vitest run",
+    "test:coverage": "TZ='Etc/GMT+1' vitest run --coverage",
+    "test:watch": "TZ='Etc/GMT+1' vitest watch"
+  },
+  "browserslist": [
+    "extends @nextcloud/browserslist-config"
+  ],
+  "dependencies": {
+    "@mdi/svg": "^7.4.47",
+    "@nextcloud/axios": "^2.6.0",
+    "@nextcloud/dialogs": "^7.4.1",
+    "@nextcloud/initial-state": "^3.0.0",
+    "@nextcloud/l10n": "^3.4.1",
+    "@nextcloud/logger": "^3.0.3",
+    "@nextcloud/router": "^3.1.0",
+    "@nextcloud/typings": "^1.10.0",
+    "@nextcloud/vue": "^9.9.0",
+    "pinia": "^4.0.3",
+    "vue": "^3.5.42",
+    "vue-material-design-icons": "^5.3.1"
+  },
+  "devDependencies": {
+    "@nextcloud/browserslist-config": "^3.1.2",
+    "@nextcloud/eslint-config": "^9.0.1",
+    "@nextcloud/vite-config": "^2.5.2",
+    "@pinia/testing": "^2.0.1",
+    "@vitest/coverage-istanbul": "^4.1.11",
+    "@vue/test-utils": "^2.4.11",
+    "@vue/tsconfig": "^0.9.1",
+    "browserslist": "^4.28.8",
+    "happy-dom": "^20.11.15",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.3",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": "^24.0.0",
+    "npm": "^11.3.0"
+  }
+}

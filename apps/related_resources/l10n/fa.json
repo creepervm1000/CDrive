@@ -1,0 +1,18 @@
+{ "translations": {
+    "Calendar" : "تقویم",
+    "Calendar \"%s\"" : "تقویم «%s»",
+    "Deck" : "کارتابل",
+    "Deck board \"%s\"" : "برد کارتابل «%s»",
+    "Files" : "فایل‌ها",
+    "File \"%s\"" : "فایل «%s»",
+    "Group Folder" : "پوشه گروهی",
+    "Group Folder \"%s\"" : "پوشه گروهی «%s»",
+    "Talk conversation" : "گفتگوی تاک",
+    "Conversation with %s" : "گفتگو با %s",
+    "Talk" : "تاک",
+    "Talk conversation \"%s\"" : "گفتگوی تاک «%s»",
+    "Related Resources" : "منابع مرتبط",
+    "Displays resources related to current item in right panel" : "نمایش منابع مرتبط با آیتم جاری در پنل سمت راست",
+    "Displays resources related to current item in right panel." : "نمایش منابع مرتبط با آیتم جاری در پنل سمت راست"
+},"pluralForm" :"nplurals=2; plural=(n > 1);"
+}

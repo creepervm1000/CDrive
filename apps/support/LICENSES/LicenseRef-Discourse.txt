@@ -1,0 +1,5 @@
+The Discourse logo
+
+Discourse logo ®, Civilized Discourse Construction Kit, Inc.
+
+https://github.com/discourse/discourse#copyright--license

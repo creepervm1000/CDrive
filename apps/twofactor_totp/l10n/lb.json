@@ -1,0 +1,6 @@
+{ "translations": {
+    "Enable TOTP" : "TOTP Aschalten",
+    "Verify" : "Iwwerpréiwen",
+    "Submit" : "Iwwermëttelen"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

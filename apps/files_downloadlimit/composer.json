@@ -1,0 +1,42 @@
+{
+	"name": "nextcloud/files_downloadlimit",
+	"require-dev": {
+		"bamarni/composer-bin-plugin": "^1.8"
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"OCP\\": "vendor/nextcloud/ocp/OCP"
+		}
+	},
+	"extra": {
+		"bamarni-bin": {
+			"bin-links": true,
+			"forward-command": true
+		}
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"platform": {
+			"php": "8.3.0"
+		},
+		"sort-packages": true,
+		"allow-plugins": {
+			"bamarni/composer-bin-plugin": true
+		}
+	},
+	"scripts": {
+		"cs:check": "vendor-bin/cs-fixer/vendor/php-cs-fixer/shim/php-cs-fixer fix --dry-run --diff",
+		"cs:fix": "vendor-bin/cs-fixer/vendor/php-cs-fixer/shim/php-cs-fixer fix",
+		"lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
+		"psalm": "psalm --threads=1",
+		"psalm:clear": "psalm --clear-cache && vendor-bin/psalm/vendor/bin/psalm --clear-cache --clear-global-cache",
+		"psalm:update-baseline": "psalm --update-baseline --set-baseline=tests/psalm-baseline.xml"
+	},
+	"authors": [
+		{
+			"name": "John Molakvoæ",
+			"email": "skjnldsv@protonmail.com"
+		}
+	]
+}

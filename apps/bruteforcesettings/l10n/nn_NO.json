@@ -1,0 +1,8 @@
+{ "translations": {
+    "Brute-force settings" : "Rå makt-instillingar",
+    "Whitelist IPs" : "Godkjende IP-adresser",
+    "Comment" : "Kommentér",
+    "Add" : "Legg til",
+    "Save" : "Lagre"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

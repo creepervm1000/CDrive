@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<!--
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info>
+	<id>app_api</id>
+	<name>AppAPI</name>
+	<summary>Nextcloud AppAPI</summary>
+	<description>
+	<![CDATA[
+### What is AppAPI?
+
+AppAPI is the Nextcloud component that enables **External Apps (ExApps)**.
+ExApps are apps whose backend runs **outside** the Nextcloud PHP process (usually as a Docker container), while still integrating with your Nextcloud users, permissions and web UI.
+
+### Do I need it?
+
+No. If you do not plan to install External Apps, you can disable AppAPI.
+
+If AppAPI is enabled without a configured Deploy Daemon, Nextcloud will show the info message:
+
+> "AppAPI default deploy daemon is not set …"
+
+That warning means: "External Apps are not configured yet".
+
+You can either disable AppAPI, or configure a Deploy Daemon (see below).
+
+### How do External Apps get deployed?
+
+A **Deploy Daemon** is the service Nextcloud talks to in order to install, start, stop and reach ExApps.
+
+Two options are available:
+
+- **HaRP** (recommended for Nextcloud 32+) — a high-performance reverse proxy with FRP tunneling
+- **Docker Socket Proxy** (legacy) — scheduled for removal in Nextcloud 35
+
+See the [admin documentation](https://docs.nextcloud.com/server/latest/admin_manual/exapps_management/DeployConfigurations.html) for setup instructions.
+	]]></description>
+	<version>35.0.0</version>
+	<licence>AGPL-3.0-or-later</licence>
+	<author mail="andrey18106x@gmail.com" homepage="https://github.com/andrey18106">Andrey Borysenko</author>
+	<author mail="bigcat88@icloud.com" homepage="https://github.com/bigcat88">Alexander Piskun</author>
+	<namespace>AppAPI</namespace>
+	<documentation>
+		<admin>https://docs.nextcloud.com/server/latest/admin_manual/exapps_management/AppAPIAndExternalApps.html</admin>
+		<developer>https://docs.nextcloud.com/server/latest/developer_manual/exapp_development/index.html</developer>
+	</documentation>
+	<category>integration</category>
+	<category>tools</category>
+	<website>https://github.com/nextcloud/app_api</website>
+	<discussion>https://github.com/nextcloud/app_api/discussions</discussion>
+	<bugs>https://github.com/nextcloud/app_api/issues</bugs>
+	<repository type="git">https://github.com/nextcloud/app_api.git</repository>
+	<screenshot>https://raw.githubusercontent.com/nextcloud/app_api/main/screenshots/app_api_1.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/nextcloud/app_api/main/screenshots/app_api_2.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/nextcloud/app_api/main/screenshots/app_api_3.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/nextcloud/app_api/main/screenshots/app_api_4.png</screenshot>
+	<dependencies>
+		<nextcloud min-version="35" max-version="35"/>
+	</dependencies>
+	<background-jobs>
+		<job>OCA\AppAPI\BackgroundJob\ExAppInitStatusCheckJob</job>
+		<job>OCA\AppAPI\BackgroundJob\ExAppSetupChecksRefreshJob</job>
+	</background-jobs>
+	<repair-steps>
+		<post-migration>
+			<step>OCA\AppAPI\Migration\DaemonUpdateGPUSRepairStep</step>
+		</post-migration>
+		<install>
+			<step>OCA\AppAPI\Migration\DataInitializationStep</step>
+			<step>OCA\AppAPI\Migration\DaemonUpdateV2RepairStep</step>
+			<step>OCA\AppAPI\Migration\DaemonUpdateGPUSRepairStep</step>
+		</install>
+	</repair-steps>
+	<commands>
+		<command>OCA\AppAPI\Command\ExApp\Register</command>
+		<command>OCA\AppAPI\Command\ExApp\Unregister</command>
+		<command>OCA\AppAPI\Command\ExApp\Update</command>
+		<command>OCA\AppAPI\Command\ExApp\Enable</command>
+		<command>OCA\AppAPI\Command\ExApp\Disable</command>
+		<command>OCA\AppAPI\Command\ExApp\ListExApps</command>
+		<command>OCA\AppAPI\Command\ExAppConfig\GetConfig</command>
+		<command>OCA\AppAPI\Command\ExAppConfig\SetConfig</command>
+		<command>OCA\AppAPI\Command\ExAppConfig\DeleteConfig</command>
+		<command>OCA\AppAPI\Command\ExAppConfig\ListConfig</command>
+		<command>OCA\AppAPI\Command\Daemon\RegisterDaemon</command>
+		<command>OCA\AppAPI\Command\Daemon\UnregisterDaemon</command>
+		<command>OCA\AppAPI\Command\Daemon\ListDaemons</command>
+		<command>OCA\AppAPI\Command\Daemon\AddRegistry</command>
+		<command>OCA\AppAPI\Command\Daemon\RemoveRegistry</command>
+		<command>OCA\AppAPI\Command\Daemon\ListRegistry</command>
+	</commands>
+	<settings>
+		<admin>OCA\AppAPI\Settings\Admin</admin>
+		<admin-section>OCA\AppAPI\Settings\AdminSection</admin-section>
+		<admin-section>OCA\AppAPI\Settings\DeclarativeSettings\AiIntegrationTeam</admin-section>
+		<admin-section>OCA\AppAPI\Settings\DeclarativeSettings\DeclarativeSettings</admin-section>
+		<personal-section>OCA\AppAPI\Settings\DeclarativeSettings\AiIntegrationTeam</personal-section>
+		<personal-section>OCA\AppAPI\Settings\DeclarativeSettings\DeclarativeSettings</personal-section>
+	</settings>
+</info>

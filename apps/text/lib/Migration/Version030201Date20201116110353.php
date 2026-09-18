@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Text\Migration;
+
+use Closure;
+use OCP\DB\ISchemaWrapper;
+use OCP\IDBConnection;
+use OCP\Migration\IOutput;
+use OCP\Migration\SimpleMigrationStep;
+
+class Version030201Date20201116110353 extends SimpleMigrationStep {
+	private readonly bool $isOracle;
+
+	public function __construct(IDBConnection $connection) {
+		$this->isOracle = $connection->getDatabaseProvider() === IDBConnection::PLATFORM_ORACLE;
+	}
+
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options) {
+		/** @var ISchemaWrapper $schema */
+		$schema = $schemaClosure();
+
+		$this->ensureColumnIsNullable($schema, 'text_steps', 'version');
+
+		if ($this->isOracle) {
+			// Drop table if we are on oracle and recreate it with the next migration Version030201Date20201116123153
+			if ($schema->hasTable('text_documents')) {
+				$schema->dropTable('text_documents');
+			}
+		} else {
+			$this->ensureColumnIsNullable($schema, 'text_documents', 'current_version');
+			$this->ensureColumnIsNullable($schema, 'text_documents', 'last_saved_version');
+			$table = $schema->getTable('text_documents');
+			$column = $table->getColumn('id');
+			if ($column->getAutoincrement()) {
+				$table->modifyColumn('id', [
+					'autoincrement' => false,
+				]);
+			}
+		}
+
+		return $schema;
+	}
+
+	/**
+	 * @param non-empty-string $tableName
+	 * @param non-empty-string $columnName
+	 */
+	protected function ensureColumnIsNullable(ISchemaWrapper $schema, string $tableName, string $columnName): bool {
+		$table = $schema->getTable($tableName);
+		$column = $table->getColumn($columnName);
+
+		if ($column->getNotnull()) {
+			$column->setNotnull(false);
+			return true;
+		}
+
+		return false;
+	}
+}

@@ -1,0 +1,8 @@
+{ "translations": {
+    "App" : "Ilova",
+    "Time" : "Vaqt",
+    "Show details" : "Tafsilotlarni ko'rsatish",
+    "Warning" : "Ogohlantirish",
+    "Error" : "Xatolik"
+},"pluralForm" :"nplurals=1; plural=0;"
+}

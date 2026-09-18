@@ -1,0 +1,90 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\FirstRunWizard\Listener;
+
+use OCA\FirstRunWizard\AppInfo\Application;
+use OCA\FirstRunWizard\Constants;
+use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
+use OCP\AppFramework\Services\IAppConfig;
+use OCP\AppFramework\Services\IInitialState;
+use OCP\Config\IUserConfig;
+use OCP\Defaults;
+use OCP\EventDispatcher\Event;
+use OCP\EventDispatcher\IEventListener;
+use OCP\IConfig;
+use OCP\IUser;
+use OCP\IUserSession;
+use OCP\Util;
+use Override;
+
+/**
+ * @template-implements IEventListener<BeforeTemplateRenderedEvent>
+ */
+class BeforeTemplateRenderedListener implements IEventListener {
+
+	public function __construct(
+		private readonly IConfig $systemConfig,
+		private readonly IAppConfig $appConfig,
+		private readonly IUserConfig $userConfig,
+		private readonly IUserSession $userSession,
+		private readonly IInitialState $initialState,
+		private readonly Defaults $theming,
+	) {
+	}
+
+	#[Override]
+	public function handle(Event $event): void {
+		if (!$event instanceof BeforeTemplateRenderedEvent) {
+			return;
+		}
+
+		if (!$event->isLoggedIn()) {
+			return;
+		}
+
+		$user = $this->userSession->getUser();
+		if (!$user instanceof IUser) {
+			return;
+		}
+
+		if ($this->appConfig->getAppValueBool('wizard_enabled', true)) {
+			$lastSeenVersion = $this->userConfig->getValueString($user->getUID(), Application::APP_ID, 'show', '0.0.0');
+
+			// If current is newer then last seen we activate the wizard
+			if (version_compare(Constants::CHANGELOG_VERSION, $lastSeenVersion, '>')) {
+				Util::addScript(Application::APP_ID, Application::APP_ID . '-activate');
+			}
+
+			// If the user was already seen before (compatibility with older wizard versions where the value was 1)
+			// then we only show the changelog
+			if (version_compare($lastSeenVersion, '1', '>')) {
+				$this->initialState->provideInitialState('changelogOnly', true);
+			}
+		}
+
+		Util::addStyle(Application::APP_ID, Application::APP_ID . '-style');
+		Util::addScript(Application::APP_ID, Application::APP_ID . '-about');
+
+		$this->initialState->provideInitialState(
+			'desktop',
+			$this->systemConfig->getSystemValueString('customclient_desktop', $this->theming->getSyncClientUrl())
+		);
+
+		$this->initialState->provideInitialState(
+			'android',
+			$this->systemConfig->getSystemValueString('customclient_android', $this->theming->getAndroidClientUrl())
+		);
+
+		$this->initialState->provideInitialState(
+			'ios',
+			$this->systemConfig->getSystemValueString('customclient_ios', $this->theming->getiOSClientUrl())
+		);
+	}
+}

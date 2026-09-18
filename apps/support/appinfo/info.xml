@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!--
+  - SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-FileCopyrightText: 2026 CDrive contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+  -
+  - CDrive fork: subscription system removed.
+-->
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>support</id>
+	<name>Support</name>
+	<summary>Getting support and help for your CDrive</summary>
+	<description>The support app generates local system reports for troubleshooting and links to free community help resources. CDrive has no subscriptions or paywalls; all features are free.</description>
+	<version>7.0.0</version>
+	<licence>AGPL-3.0-or-later</licence>
+	<author>Nextcloud GmbH</author>
+	<namespace>Support</namespace>
+	<types>
+		<session />
+	</types>
+	<category>integration</category>
+	<bugs>https://github.com/nextcloud/server/issues</bugs>
+	<screenshot>https://user-images.githubusercontent.com/245432/43194622-1a40ce90-9003-11e8-8101-15d08cce7264.png</screenshot>
+	<dependencies>
+		<nextcloud min-version="35" max-version="35" />
+	</dependencies>
+	<background-jobs>
+		<job>OCA\Support\BackgroundJobs\CheckSubscription</job>
+	</background-jobs>
+	<repair-steps>
+		<post-migration>
+			<step>OCA\Support\Repair\SwitchUpdaterServer</step>
+			<step>OCA\Support\Repair\MigrateLazyAppConfig</step>
+		</post-migration>
+	</repair-steps>
+	<commands>
+		<command>OCA\Support\Command\SystemReport</command>
+	</commands>
+</info>

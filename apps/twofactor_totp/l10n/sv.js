@@ -1,0 +1,24 @@
+OC.L10N.register(
+    "twofactor_totp",
+    {
+    "You enabled TOTP two-factor authentication for your account" : "Du aktiverade TOTP-baserad tvåfaktorsautentisering för ditt konto",
+    "You disabled TOTP two-factor authentication for your account" : "Du inaktiverade TOTP-baserad tvåfaktorsautentisering för ditt konto",
+    "TOTP two-factor authentication disabled by the administration" : "TOTP-baserad tvåfaktorsautentisering har inaktiverats av administratören",
+    "TOTP (Authenticator app)" : "TOTP (autentiseringsapp)",
+    "Authenticate with a TOTP app" : "Autentisera med en TOTP-app",
+    "Two-Factor TOTP Provider" : "TOTP-leverantör för tvåfaktorsautentisering",
+    "Two-factor TOTP provider" : "TOTP-leverantör för tvåfaktorsautentisering",
+    "A two-factor authentication provider for TOTP (RFC 6238)" : "En leverantör av TOTP-baserad tvåfaktorsautentisering (RFC 6238)",
+    "Could not enable TOTP" : "Det gick inte att aktivera TOTP",
+    "Could not verify your key. Please try again" : "Det gick inte att verifiera nyckeln. Försök igen",
+    "Could not confirm TOTP" : "Det gick inte att bekräfta TOTP",
+    "Enable TOTP" : "Aktivera TOTP",
+    "Your new TOTP secret is:" : "Din nya TOTP-hemlighet är:",
+    "For quick setup, scan this QR code with your TOTP app:" : "Skanna QR-koden med din TOTP-app för snabb konfiguration:",
+    "After you configured your app, enter a test code below to ensure everything works correctly:" : "När du har konfigurerat appen anger du en testkod nedan för att kontrollera att allt fungerar:",
+    "Authentication code" : "Autentiseringskod",
+    "Verify" : "Verifiera",
+    "Get the authentication code from the two-factor authentication app on your device." : "Hämta autentiseringskoden från appen för tvåfaktorsautentisering på din enhet.",
+    "Submit" : "Skicka"
+},
+"nplurals=2; plural=(n != 1);");

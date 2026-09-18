@@ -1,0 +1,58 @@
+{
+	"name": "nextcloud/text",
+	"type": "project",
+	"require-dev": {
+		"roave/security-advisories": "dev-master",
+		"nextcloud/coding-standard": "^1.0.0",
+		"psalm/phar": "^6.5",
+		"phpunit/phpunit": "^9.5",
+		"ext-mbstring": "*",
+		"nextcloud/ocp": "dev-stable35",
+		"bamarni/composer-bin-plugin": "^1.9"
+	},
+	"license": "AGPLv3",
+	"authors": [
+		{
+			"name": "Julius Härtl",
+			"email": "jus@bitgrid.net"
+		}
+	],
+	"require": {
+		"php": "^8.3"
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"platform": {
+			"php": "8.3"
+		},
+		"allow-plugins": {
+			"bamarni/composer-bin-plugin": true
+		}
+	},
+	"scripts": {
+		"lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
+		"cs:check": "php-cs-fixer fix --dry-run --diff",
+		"cs:fix": "php-cs-fixer fix",
+		"psalm": "psalm.phar",
+		"rector": "vendor/bin/rector process && composer cs:fix",
+		"test:unit": "phpunit -c tests/phpunit.xml",
+		"post-install-cmd": [
+			"[ $COMPOSER_DEV_MODE -eq 0 ] || composer bin all install --ansi"
+		],
+		"post-update-cmd": [
+			"[ $COMPOSER_DEV_MODE -eq 0 ] || composer bin all update --ansi"
+		]
+	},
+	"extra": {
+		"bamarni-bin": {
+			"bin-links": true,
+			"forward-command": true
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"OCP\\": "vendor/nextcloud/ocp/OCP"
+		}
+	}
+}

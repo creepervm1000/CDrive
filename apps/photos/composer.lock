@@ -1,0 +1,331 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "3d5f90d0c9c5accd6a7c73b280b4ea26",
+    "packages": [
+        {
+            "name": "hexogen/kdtree",
+            "version": "v0.2.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hexogen/kdtree.git",
+                "reference": "fbcd2b472c1bb3401929b38144ddd66f8fd14c65"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/hexogen/kdtree/zipball/fbcd2b472c1bb3401929b38144ddd66f8fd14c65",
+                "reference": "fbcd2b472c1bb3401929b38144ddd66f8fd14c65",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1|^8.0"
+            },
+            "require-dev": {
+                "league/csv": "^9.7.0",
+                "mockery/mockery": "dev-main",
+                "phpunit/phpunit": "^9.0",
+                "squizlabs/php_codesniffer": "^3.5.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Hexogen\\KDTree\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Volodymyr Basarab",
+                    "email": "volodymyrbas@gmail.com",
+                    "homepage": "https://github.com/hexogen",
+                    "role": "Developer"
+                }
+            ],
+            "description": "file system KDTree index",
+            "homepage": "https://github.com/hexogen/kdtree",
+            "keywords": [
+                "algorithms",
+                "data structures",
+                "hexogen",
+                "kdtree",
+                "search"
+            ],
+            "support": {
+                "issues": "https://github.com/hexogen/kdtree/issues",
+                "source": "https://github.com/hexogen/kdtree/tree/v0.2.6"
+            },
+            "time": "2024-09-15T21:06:32+00:00"
+        },
+        {
+            "name": "nelexa/buffer",
+            "version": "1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Ne-Lexa/php-byte-buffer.git",
+                "reference": "c97bc126d5fbe0c94152fce406a054f681149fac"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Ne-Lexa/php-byte-buffer/zipball/c97bc126d5fbe0c94152fce406a054f681149fac",
+                "reference": "c97bc126d5fbe0c94152fce406a054f681149fac",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^4.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Nelexa\\Buffer\\": "src/Nelexa/Buffer"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ne-Lexa",
+                    "email": "alexey@nelexa.ru"
+                }
+            ],
+            "description": "Reading And Writing Binary Data (incl. primitive types, ex. byte, ubyte, short, ushort, int, uint, long, float, double). The classes also help with porting the I/O operations of the JAVA code.",
+            "keywords": [
+                "Double",
+                "binary",
+                "byte",
+                "float",
+                "int",
+                "io",
+                "java",
+                "long",
+                "pack",
+                "primitive",
+                "short",
+                "ubyte",
+                "uint",
+                "unpack",
+                "ushort"
+            ],
+            "support": {
+                "issues": "https://github.com/Ne-Lexa/php-byte-buffer/issues",
+                "source": "https://github.com/Ne-Lexa/php-byte-buffer/tree/master"
+            },
+            "time": "2019-05-25T17:47:34+00:00"
+        },
+        {
+            "name": "symfony/polyfill-php84",
+            "version": "v1.38.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-php84.git",
+                "reference": "f4e1dfaee5b74aba5964fe1fd4dfc7ba5e3085fa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-php84/zipball/f4e1dfaee5b74aba5964fe1fd4dfc7ba5e3085fa",
+                "reference": "f4e1dfaee5b74aba5964fe1fd4dfc7ba5e3085fa",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php84\\": ""
+                },
+                "classmap": [
+                    "Resources/stubs"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 8.4+ features to lower PHP versions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-php84/tree/v1.38.1"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-05-26T12:51:13+00:00"
+        },
+        {
+            "name": "woltlab/webp-exif",
+            "version": "v0.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/WoltLab/webp-exif.git",
+                "reference": "ccab359ec577af340a665160c2881e65df18a037"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/WoltLab/webp-exif/zipball/ccab359ec577af340a665160c2881e65df18a037",
+                "reference": "ccab359ec577af340a665160c2881e65df18a037",
+                "shasum": ""
+            },
+            "require": {
+                "ext-exif": "*",
+                "nelexa/buffer": "^1.3",
+                "php": "~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0 || ~8.6.0",
+                "symfony/polyfill-php84": "^1.31.1"
+            },
+            "require-dev": {
+                "phpstan/extension-installer": "^1.4.3",
+                "phpstan/phpstan": "^2.2.5",
+                "phpstan/phpstan-deprecation-rules": "^2.0.4",
+                "phpstan/phpstan-phpunit": "^2.0.18",
+                "phpstan/phpstan-strict-rules": "^2.0.11",
+                "phpunit/php-code-coverage": "^12.5.7",
+                "phpunit/phpunit": "^12.5.31"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WoltLab\\WebpExif\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Extract and embed EXIF metadata from and to WebP images",
+            "keywords": [
+                "Webp",
+                "exif"
+            ],
+            "support": {
+                "issues": "https://github.com/WoltLab/webp-exif/issues",
+                "source": "https://github.com/WoltLab/webp-exif/tree/v0.1.5"
+            },
+            "time": "2026-07-15T13:50:15+00:00"
+        }
+    ],
+    "packages-dev": [
+        {
+            "name": "bamarni/composer-bin-plugin",
+            "version": "1.9.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bamarni/composer-bin-plugin.git",
+                "reference": "641d0663f5ac270b1aeec4337b7856f76204df47"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bamarni/composer-bin-plugin/zipball/641d0663f5ac270b1aeec4337b7856f76204df47",
+                "reference": "641d0663f5ac270b1aeec4337b7856f76204df47",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^2.0",
+                "php": "^7.2.5 || ^8.0"
+            },
+            "require-dev": {
+                "composer/composer": "^2.2.26",
+                "ext-json": "*",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan": "^1.8 || ^2.0",
+                "phpstan/phpstan-phpunit": "^1.1 || ^2.0",
+                "phpunit/phpunit": "^8.5 || ^9.6 || ^10.0",
+                "symfony/console": "^2.8.52 || ^3.4.35 || ^4.4 || ^5.0 || ^6.0",
+                "symfony/finder": "^2.8.52 || ^3.4.35 || ^4.4 || ^5.0 || ^6.0",
+                "symfony/process": "^2.8.52 || ^3.4.35 || ^4.4 || ^5.0 || ^6.0"
+            },
+            "type": "composer-plugin",
+            "extra": {
+                "class": "Bamarni\\Composer\\Bin\\BamarniBinPlugin"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Bamarni\\Composer\\Bin\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "No conflicts for your bin dependencies",
+            "keywords": [
+                "composer",
+                "conflict",
+                "dependency",
+                "executable",
+                "isolation",
+                "tool"
+            ],
+            "support": {
+                "issues": "https://github.com/bamarni/composer-bin-plugin/issues",
+                "source": "https://github.com/bamarni/composer-bin-plugin/tree/1.9.1"
+            },
+            "time": "2026-02-04T10:18:12+00:00"
+        }
+    ],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "platform-overrides": {
+        "php": "8.1.17"
+    },
+    "plugin-api-version": "2.9.0"
+}

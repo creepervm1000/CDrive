@@ -1,0 +1,26 @@
+OC.L10N.register(
+    "firstrunwizard",
+    {
+    "Add your profile information! Set a profile picture and full name for easier recognition across all features." : "Дадайце інфармацыю пра свой профіль! Задайце аватар профілю і поўнае імя для большай пазнавальнасці ва ўсіх функцыях.",
+    "Add your profile information! Set a profile picture for easier recognition across all features." : "Дадайце інфармацыю пра свой профіль! Задайце аватар профілю для большай пазнавальнасці ва ўсіх функцыях.",
+    "App recommendation: Calendar" : "Рэкамендаваная праграма: Каляндар",
+    "Schedule work & meetings, synced with all your devices." : "Плануйце працу і сустрэчы, сінхранізуючы іх паміж усімі вашымі прыладамі.",
+    "App recommendation: Contacts" : "Рэкамендаваная праграма: Кантакты",
+    "Keep your colleagues and friends in one place without leaking their private info." : "Трымайце калег і сяброў у адным месцы, не раскрываючы іх асабістую інфармацыю.",
+    "App recommendation: Mail" : "Рэкамендаваная праграма: Пошта",
+    "Simple email app nicely integrated with Files, Contacts and Calendar." : "Простая праграма электроннай пошты, добра інтэграваная з Файламі, Кантактамі і Календаром.",
+    "App recommendation: Tasks" : "Рэкамендаваная праграма: Заданні",
+    "Sync tasks from various devices with your Nextcloud and edit them online." : "Сінхранізуйце заданні з розных прылад з Nextcloud і рэдагуйце іх у сетцы.",
+    "iOS app" : "Праграма для iOS",
+    "Close" : "Закрыць",
+    "Be a part of the community that helps build, design, translate and promote Nextcloud!" : "Станьце часткай супольнасці, якая дапамагае ствараць, праектаваць, перакладаць і прасоўваць Nextcloud!",
+    "Calendar and contacts ↗" : "Каляндар і кантакты",
+    "Welcome to {cloudName}!" : "Вітаем у {cloudName}!",
+    "Skip" : "Прапусціць",
+    "Privacy" : "Прыватнасць",
+    "Community" : "Супольнасць",
+    "URL copied" : "URL-адрас скапіяваны",
+    "Server address" : "Адрас сервера",
+    "Nextcloud on all your devices" : "Nextcloud на ўсіх вашых прыладах"
+},
+"nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);");

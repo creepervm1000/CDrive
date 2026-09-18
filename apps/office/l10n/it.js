@@ -1,0 +1,22 @@
+OC.L10N.register(
+    "office",
+    {
+    "Documents" : "Documenti",
+    "Spreadsheets" : "Fogli elettronici",
+    "Presentations" : "Presentazioni",
+    "Office" : "Office",
+    "Create new" : "Crea nuovo",
+    "Blank" : "Vuoto",
+    "Search {category}" : "Cerca {category}",
+    "Search" : "Cerca",
+    "All" : "Tutti",
+    "Shared with me" : "Condivisi con me",
+    "Starred" : "Preferiti",
+    "Switch to grid view" : "Passa alla vista a griglia",
+    "Switch to list view" : "Passa alla vista a elenco",
+    "No {category} found" : "Nessun {category} trovato",
+    "Create" : "Crea",
+    "Filename" : "Nome file",
+    "Filename cannot be empty" : "Il nome del file non può essere vuoto"
+},
+"nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

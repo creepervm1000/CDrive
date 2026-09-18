@@ -1,0 +1,20 @@
+OC.L10N.register(
+    "office",
+    {
+    "Documents" : "Documente",
+    "Spreadsheets" : "Foi de calcul",
+    "Presentations" : "Prezentări",
+    "Office" : "Birou",
+    "Create new" : "Crează nou",
+    "Blank" : "Gol",
+    "Search" : "Căutare",
+    "All" : "Toate ",
+    "Shared with me" : "Partajat cu mine",
+    "Starred" : "Articole selectate",
+    "Switch to grid view" : "Comută la organizare tip grilă",
+    "Switch to list view" : "Comuta la organizarea tip listă",
+    "Create" : "Crează",
+    "Filename" : "Nume fișier",
+    "Filename cannot be empty" : "Numele fișierului nu poate fi gol."
+},
+"nplurals=3; plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?2:1));");

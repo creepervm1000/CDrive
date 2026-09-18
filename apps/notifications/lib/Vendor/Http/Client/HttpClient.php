@@ -1,0 +1,16 @@
+<?php
+
+namespace OCA\Notifications\Vendor\Http\Client;
+
+use OCA\Notifications\Vendor\Psr\Http\Client\ClientInterface;
+/**
+ * {@inheritdoc}
+ *
+ * Provide the Httplug HttpClient interface for BC.
+ * You should typehint OCA\Notifications\Vendor\Psr\Http\Client\ClientInterface in new code
+ *
+ * @deprecated since version 2.4, use OCA\Notifications\Vendor\Psr\Http\Client\ClientInterface instead; see https://www.php-fig.org/psr/psr-18/
+ */
+interface HttpClient extends ClientInterface
+{
+}

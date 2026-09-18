@@ -1,0 +1,23 @@
+{
+  "name": "support",
+  "description": "",
+  "scripts": {
+    "lint": "eslint --ext .js,.vue cypress --max-warnings=0",
+    "lint:fix": "eslint --ext .js,.vue cypress --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nextcloud-gmbh/support.git"
+  },
+  "author": "Jonas Meurer",
+  "license": "AGPL-3.0-or-later",
+  "devDependencies": {
+    "@nextcloud/browserslist-config": "^3.0.0",
+    "@nextcloud/e2e-test-server": "^0.5.1",
+    "@nextcloud/eslint-config": "^9.0.1",
+    "cypress": "^15.15.0",
+    "cypress-vite": "^1.10.2",
+    "eslint-plugin-cypress": "^6.4.4"
+  },
+  "version": "7.0.0-dev.0"
+}

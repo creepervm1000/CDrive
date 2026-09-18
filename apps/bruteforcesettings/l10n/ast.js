@@ -1,0 +1,14 @@
+OC.L10N.register(
+    "bruteforcesettings",
+    {
+    "Brute-force settings" : "Configuración escontra la fuercia bruta",
+    "Whitelist IPs" : "IPs permitíes",
+    "IP address" : "Direición IP",
+    "Mask" : "Mázcara",
+    "Comment" : "Comentariu",
+    "Add" : "Amestar",
+    "Save" : "Guardar",
+    "Delete entry for {subnet}" : "Desaniciar la entrada de {subnet}",
+    "Your remote address was identified as \"{remoteAddress}\" and is bypassing brute-force protection." : "La to direición remota identificóse como «{remoteAddress}» y ta omitiendo la proteición escontra la fuercia bruta."
+},
+"nplurals=2; plural=(n != 1);");

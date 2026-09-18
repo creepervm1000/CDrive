@@ -1,0 +1,97 @@
+{
+	"name": "nextcloud/3rdparty",
+	"version": "dev-stable35",
+	"description": "All 3rdparty components",
+	"license": "MIT",
+	"config": {
+		"vendor-dir": ".",
+		"preferred-install": "dist",
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"platform": {
+			"php": "8.3.0"
+		},
+		"sort-packages": true,
+		"allow-plugins": {
+			"cweagans/composer-patches": true
+		}
+	},
+	"require": {
+		"php": "^8.3",
+		"ext-ctype": "*",
+		"ext-mbstring": "*",
+		"aws/aws-sdk-php": "^3.391",
+		"bantu/ini-get-wrapper": "v1.0.1",
+		"cweagans/composer-patches": "^2.0",
+		"deepdiver/zipstreamer": "^3.0.1",
+		"deepdiver1975/tarstreamer": "^2.1.0",
+		"doctrine/dbal": "^3.10.4",
+		"egulias/email-validator": "^4.0.4",
+		"firebase/php-jwt": "^7.0",
+		"fusonic/opengraph": "^3.1.0",
+		"gapple/structured-fields": "^2.3",
+		"giggsey/libphonenumber-for-php-lite": "^9.0.36",
+		"guzzlehttp/guzzle": "^7.15.2",
+		"icewind/searchdav": "^3.2.0",
+		"icewind/smb": "^3.8.1",
+		"icewind/streams": "^0.7.8",
+		"justinrainbow/json-schema": "^6.10",
+		"kornrunner/blurhash": "^1.2",
+		"laravel/serializable-closure": "^2.0.15",
+		"mexitek/phpcolors": "^1.0",
+		"microsoft/azure-storage-blob": "^1.5.4",
+		"mlocati/ip-lib": "^1.22",
+		"nextcloud/lognormalizer": "^3.0.1",
+		"pear/archive_tar": "^1.6.0",
+		"pear/pear-core-minimal": "^1.10",
+		"php-http/guzzle7-adapter": "^1.1.0",
+		"php-opencloud/openstack": "^3.17",
+		"phpseclib/phpseclib": "^3.0.55",
+		"pimple/pimple": "^3.6.2",
+		"predis/predis": "^3.4.2",
+		"psr/clock": "^1.0",
+		"psr/container": "^2.0.2",
+		"psr/event-dispatcher": "^1.0",
+		"psr/http-client": "^1.0.3",
+		"psr/log": "^3.0.2",
+		"punic/punic": "^3.8",
+		"sabre/dav": "^4.7.0",
+		"stecman/symfony-console-completion": "^0.15.0",
+		"symfony/console": "^7.4.15",
+		"symfony/event-dispatcher": "^7.4.15",
+		"symfony/http-foundation": "^7.4.15",
+		"symfony/mailer": "^7.4.15",
+		"symfony/polyfill-intl-grapheme": "^1.41.0",
+		"symfony/polyfill-intl-normalizer": "^1.38.0",
+		"symfony/polyfill-php84": "^1.38.1",
+		"symfony/polyfill-php85": "^1.41.0",
+		"symfony/polyfill-php86": "^1.41.0",
+		"symfony/process": "^6.4.33",
+		"symfony/routing": "^6.4.41",
+		"symfony/string": "^7.4.15",
+		"symfony/translation": "^6.4.4",
+		"wapmorgan/mp3info": "^0.1.1",
+		"web-auth/webauthn-lib": "^4.9.1"
+	},
+	"replace": {
+		"paragonie/random_compat": "*",
+		"symfony/polyfill-php80": "*",
+		"symfony/polyfill-php81": "*",
+		"symfony/polyfill-php82": "*",
+		"symfony/polyfill-php83": "*",
+		"symfony/polyfill-ctype": "*",
+		"symfony/polyfill-mbstring": "*"
+	},
+	"scripts": {
+		"lint": "find . -type f -name '*.php' -not -name '.*.php' -print0 | xargs -0 -n200 -P$(nproc) php -l",
+		"pre-autoload-dump": "Aws\\Script\\Composer\\Composer::removeUnusedServices"
+	},
+	"extra": {
+		"composer-patches": {
+			"patches-file": "composer.patches.json"
+		},
+		"aws/aws-sdk-php": [
+			"S3"
+		]
+	}
+}

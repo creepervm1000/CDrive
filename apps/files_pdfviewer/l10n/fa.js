@@ -1,0 +1,15 @@
+OC.L10N.register(
+    "files_pdfviewer",
+    {
+    "PDF viewer" : "نمایشگر PDF",
+    "Directly view PDF documents in your Nextcloud. \nAs an added bonus, this app can also display Adobe Illustrator (.ai) files. \nPowered by [pdf.js](https://mozilla.github.io/pdf.js/)" : "فایل‌های PDF را مستقیماً در نکست‌کلود خود مشاهده کنید.  ",
+    "Failed to load settings" : "بارگذاری تنظیمات انجام نشد",
+    "Failed to save settings" : "ذخیره‌سازی تنظیمات انجام نشد",
+    "PDF Viewer" : "نمایشگر PDF",
+    "Configure PDF viewer settings" : "تنظیمات نمایشگر PDF را پیکربندی کنید",
+    "Enable PDF scripting" : "فعال‌سازی اسکریپت‌نویسی PDF",
+    "Enabling PDF scripting allows JavaScript execution within PDF documents. This enables form calculations and dynamic content, but may pose security risks with untrusted PDFs. PDF scripts run in a sandboxed environment." : "فعال‌سازی اسکریپت‌نویسی PDF امکان اجرای JavaScript درون اسناد PDF را فراهم می‌کند. این قابلیت محاسبات فرم و محتوای پویا را ممکن می‌سازد، اما ممکن است با PDFهای غیرقابل‌اعتماد خطرات امنیتی ایجاد کند. اسکریپت‌های PDF در یک محیط ایزوله اجرا می‌شوند.",
+    "File upload failed." : "بارگذاری فایل انجام نشد.",
+    "To view a shared PDF file, the download needs to be allowed for this file share" : "برای مشاهده یک فایل PDF به اشتراک‌گذاشته‌شده، باید امکان دانلود برای این اشتراک‌گذاری فایل فعال باشد."
+},
+"nplurals=2; plural=(n > 1);");

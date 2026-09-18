@@ -1,0 +1,539 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Circles\Controller;
+
+use Exception;
+use OC\AppFramework\Middleware\Security\Exceptions\NotLoggedInException;
+use OCA\Circles\ConfigLexicon;
+use OCA\Circles\Db\CircleRequest;
+use OCA\Circles\Exceptions\FederatedEventException;
+use OCA\Circles\Exceptions\FederatedItemException;
+use OCA\Circles\Exceptions\FederatedUserException;
+use OCA\Circles\Exceptions\FederatedUserNotFoundException;
+use OCA\Circles\Exceptions\JsonNotRequestedException;
+use OCA\Circles\Exceptions\UnknownInterfaceException;
+use OCA\Circles\Model\Circle;
+use OCA\Circles\Model\Federated\FederatedEvent;
+use OCA\Circles\Model\Federated\RemoteInstance;
+use OCA\Circles\Model\FederatedUser;
+use OCA\Circles\Model\Member;
+use OCA\Circles\Model\Probes\BasicProbe;
+use OCA\Circles\Model\Probes\CircleProbe;
+use OCA\Circles\Service\CircleService;
+use OCA\Circles\Service\ConfigService;
+use OCA\Circles\Service\FederatedUserService;
+use OCA\Circles\Service\InterfaceService;
+use OCA\Circles\Service\MemberService;
+use OCA\Circles\Service\MembershipService;
+use OCA\Circles\Service\RemoteDownstreamService;
+use OCA\Circles\Service\RemoteStreamService;
+use OCA\Circles\Tools\Exceptions\InvalidItemException;
+use OCA\Circles\Tools\Exceptions\InvalidOriginException;
+use OCA\Circles\Tools\Exceptions\InvalidRemoteInstanceException;
+use OCA\Circles\Tools\Exceptions\ItemNotFoundException;
+use OCA\Circles\Tools\Exceptions\MalformedArrayException;
+use OCA\Circles\Tools\Exceptions\SignatoryException;
+use OCA\Circles\Tools\Exceptions\SignatureException;
+use OCA\Circles\Tools\Exceptions\UnknownTypeException;
+use OCA\Circles\Tools\Model\NCSignedRequest;
+use OCA\Circles\Tools\Model\SimpleDataStore;
+use OCA\Circles\Tools\Traits\TDeserialize;
+use OCA\Circles\Tools\Traits\TNCLocalSignatory;
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Services\IAppConfig;
+use OCP\IRequest;
+use OCP\IUserSession;
+
+/**
+ * Class RemoteController
+ *
+ * @package OCA\Circles\Controller
+ */
+class RemoteController extends Controller {
+	use TNCLocalSignatory;
+	use TDeserialize;
+
+	public function __construct(
+		string $appName,
+		IRequest $request,
+		private readonly CircleRequest $circleRequest,
+		private readonly IAppConfig $appConfig,
+		private readonly RemoteStreamService $remoteStreamService,
+		private readonly RemoteDownstreamService $remoteDownstreamService,
+		private readonly FederatedUserService $federatedUserService,
+		private readonly CircleService $circleService,
+		private readonly MemberService $memberService,
+		private readonly MembershipService $membershipService,
+		private readonly InterfaceService $interfaceService,
+		private readonly ConfigService $configService,
+		private readonly IUserSession $userSession,
+	) {
+		parent::__construct($appName, $request);
+
+		$this->setup('app', 'circles');
+		$this->setupArray('enforceSignatureHeaders', ['digest', 'content-length']);
+	}
+
+	/**
+	 *
+	 * @param string $test
+	 *
+	 * @return DataResponse
+	 * @throws NotLoggedInException
+	 * @throws SignatoryException
+	 * @throws UnknownInterfaceException
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function appService(string $test = ''): DataResponse {
+		try {
+			$this->publicPageJsonLimited();
+		} catch (JsonNotRequestedException) {
+			return new DataResponse();
+		}
+
+		$this->interfaceService->setCurrentInterfaceFromRequest($this->request, $test);
+		$signatory = $this->remoteStreamService->getAppSignatory(false, $this->request->getParam('auth', ''));
+
+		return new DataResponse($signatory);
+	}
+
+	/**
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function event(): DataResponse {
+		try {
+			$event = $this->extractEventFromRequest();
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$this->remoteDownstreamService->requestedEvent($event);
+
+			return new DataResponse($event->getOutcome());
+		} catch (Exception $e) {
+			$this->e($e, ['event' => $event->getWrapperToken()]);
+
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function incoming(): DataResponse {
+		try {
+			$event = $this->extractEventFromRequest();
+		} catch (Exception $e) {
+			$this->e($e);
+
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$this->remoteDownstreamService->incomingEvent($event);
+
+			return new DataResponse($this->serialize($event->getResult()));
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function test(): DataResponse {
+		try {
+			$this->interfaceService->setCurrentInterfaceFromRequest($this->request);
+			$test = $this->remoteStreamService->incomingSignedRequest();
+
+			return new DataResponse($this->serialize($test));
+		} catch (Exception $e) {
+			$this->e($e);
+
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+	}
+
+	/**
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function circles(): DataResponse {
+		try {
+			$data = $this->extractDataFromFromRequest();
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			/** @var Circle $filterCircle */
+			$filterCircle = $data->gObj('filterCircle');
+			/** @var Member $filterMember */
+			$filterMember = $data->gObj('filterMember');
+
+			$probe = new CircleProbe();
+			$probe->setFilterCircle($filterCircle)
+				->setFilterMember($filterMember)
+				->addDetail(BasicProbe::DETAILS_POPULATION);
+
+			$circles = $this->circleService->getCircles($probe);
+
+			return new DataResponse($circles);
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 *
+	 * @param string $circleId
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function circle(string $circleId): DataResponse {
+		try {
+			$this->extractDataFromFromRequest();
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$circle = $this->circleService->getCircle($circleId);
+
+			return new DataResponse($this->serialize($circle));
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 *
+	 * @param string $circleId
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function members(string $circleId): DataResponse {
+		try {
+			$this->extractDataFromFromRequest();
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$members = $this->memberService->getMembers($circleId, true);
+
+			return new DataResponse($members);
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 * ?? TODO: rename /member/ to /federatedUser/ ou /federated/  ?
+	 *
+	 *
+	 * @param string $type
+	 * @param string $userId
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function member(string $type, string $userId): DataResponse {
+		try {
+			$this->extractDataFromFromRequest();
+		} catch (Exception $e) {
+			$this->e($e);
+
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			// FILTER CIRCLE BASED ON THE CONFIG/FEDERATED_8192 !!
+			if ($type === Member::$TYPE[Member::TYPE_SINGLE]) {
+				$federatedUser = $this->federatedUserService->getFederatedUser($userId, Member::TYPE_SINGLE);
+			} elseif ($type === Member::$TYPE[Member::TYPE_CIRCLE]) {
+				$federatedUser = $this->federatedUserService->getFederatedUser($userId, Member::TYPE_CIRCLE);
+			} elseif ($type === Member::$TYPE[Member::TYPE_USER]) {
+				$federatedUser = $this->federatedUserService->getLocalFederatedUser($userId);
+			} else {
+				throw new FederatedUserNotFoundException('Entity not found');
+			}
+
+			return new DataResponse($this->serialize($federatedUser));
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 *
+	 * @param string $circleId
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function inherited(string $circleId): DataResponse {
+		try {
+			$this->extractDataFromFromRequest();
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$circle = $this->circleService->getCircle($circleId);
+
+			return new DataResponse($circle->getInheritedMembers());
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 *
+	 * @param string $circleId
+	 *
+	 * @return DataResponse
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function memberships(string $circleId): DataResponse {
+		try {
+			$this->extractDataFromFromRequest();
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e, Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$circle = $this->circleService->getCircle($circleId);
+
+			return new DataResponse($circle->getMemberships());
+		} catch (Exception $e) {
+			return $this->exceptionResponse($e);
+		}
+	}
+
+	/**
+	 * @return FederatedEvent
+	 * @throws InvalidItemException
+	 * @throws InvalidOriginException
+	 * @throws MalformedArrayException
+	 * @throws SignatoryException
+	 * @throws SignatureException
+	 * @throws UnknownInterfaceException
+	 * @throws FederatedEventException
+	 */
+	private function extractEventFromRequest(): FederatedEvent {
+		// will throw exception if instance is not configured for this event.
+		$this->interfaceService->setCurrentInterfaceFromRequest($this->request);
+		$iface = $this->interfaceService->getCurrentInterface();
+		if ($iface === InterfaceService::IFACE_FRONTAL
+			&& !$this->appConfig->getAppValueBool(ConfigLexicon::FEDERATED_TEAMS_ENABLED)) {
+			throw new FederatedEventException('frontal interface is not enabled');
+		}
+
+		$signed = $this->remoteStreamService->incomingSignedRequest();
+		$this->confirmRemoteInstance($signed);
+
+		$event = new FederatedEvent();
+		$event->import(json_decode($signed->getBody(), true));
+		$event->setSender($signed->getOrigin());
+
+		return $event;
+	}
+
+	/**
+	 * @return SimpleDataStore
+	 * @throws FederatedUserException
+	 * @throws InvalidOriginException
+	 * @throws MalformedArrayException
+	 * @throws SignatoryException
+	 * @throws SignatureException
+	 * @throws UnknownTypeException
+	 * @throws InvalidRemoteInstanceException
+	 */
+	private function extractDataFromFromRequest(): SimpleDataStore {
+		$signed = $this->remoteStreamService->incomingSignedRequest();
+		$remoteInstance = $this->confirmRemoteInstance($signed);
+
+		// There should be no need to confirm the need or the origin of the initiator as $remoteInstance
+		// already helps filtering request to the database.
+		// initiator here is only used to play with the visibility, on top of the visibility provided to
+		// the remote instance based on its type.
+		$this->federatedUserService->setRemoteInstance($remoteInstance);
+
+		$data = new SimpleDataStore();
+		$store = new SimpleDataStore(json_decode($signed->getBody(), true));
+		try {
+			/** @var FederatedUser $initiator */
+			$initiator = $store->gObj('initiator', FederatedUser::class);
+			if ($initiator->getInstance() !== $remoteInstance->getInstance() && !in_array($initiator->getInstance(), $remoteInstance->getAliases(), true)) {
+				throw new InvalidRemoteInstanceException('Initiator instance does not match remote instance');
+			}
+			$this->federatedUserService->setCurrentUser($initiator);
+		} catch (InvalidItemException|ItemNotFoundException) {
+		}
+
+		try {
+			/** @var FederatedUser $initiator */
+			$filterMember = $store->gObj('filterMember', Member::class);
+			$data->aObj('filterMember', $filterMember);
+		} catch (InvalidItemException|ItemNotFoundException) {
+		}
+
+		try {
+			/** @var FederatedUser $initiator */
+			$filterCircle = $store->gObj('filterCircle', Circle::class);
+			$data->aObj('filterCircle', $filterCircle);
+		} catch (InvalidItemException|ItemNotFoundException) {
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param NCSignedRequest $signedRequest
+	 *
+	 * @return RemoteInstance
+	 * @throws SignatoryException
+	 */
+	private function confirmRemoteInstance(NCSignedRequest $signedRequest): RemoteInstance {
+		/** @var RemoteInstance $signatory */
+		$signatory = $signedRequest->getSignatory();
+
+		if (!$signatory instanceof RemoteInstance) {
+			$this->debug('Signatory is not a known RemoteInstance', ['signedRequest' => $signedRequest]);
+			throw new SignatoryException('Could not confirm identity');
+		}
+
+		if (!$this->configService->isLocalInstance($signedRequest->getOrigin())
+			&& $signatory->getType() === RemoteInstance::TYPE_UNKNOWN) {
+			$this->debug('Could not confirm identity', ['signedRequest' => $signedRequest]);
+			throw new SignatoryException('Could not confirm identity');
+		}
+
+		$this->interfaceService->setCurrentInterface($signatory->getInterface());
+
+		return $signatory;
+	}
+
+	/**
+	 * @param Exception $e
+	 * @param int $httpErrorCode
+	 *
+	 * @return DataResponse
+	 */
+	public function exceptionResponse(
+		Exception $e,
+		int $httpErrorCode = Http::STATUS_BAD_REQUEST,
+	): DataResponse {
+		if ($e instanceof FederatedItemException) {
+			return new DataResponse($this->serialize($e), $e->getStatus());
+		}
+
+		$errorCode = (int)$e->getCode();
+		return new DataResponse(
+			[
+				'message' => $e->getMessage(),
+				'code' => $e->getCode()
+			],
+			($errorCode > 0) ? $errorCode : $httpErrorCode
+		);
+	}
+
+	/**
+	 * use this one if a method from a Controller is only PublicPage when remote client asking for Json
+	 *
+	 * try {
+	 *      $this->publicPageJsonLimited();
+	 *      return new DataResponse(['test' => 42]);
+	 * } catch (JsonNotRequestedException $e) {}
+	 *
+	 *
+	 * @throws NotLoggedInException
+	 * @throws JsonNotRequestedException
+	 */
+	private function publicPageJsonLimited(): void {
+		if (!$this->jsonRequested()) {
+			if (!$this->userSession->isLoggedIn()) {
+				throw new NotLoggedInException();
+			}
+
+			throw new JsonNotRequestedException();
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function jsonRequested(): bool {
+		return ($this->areWithinAcceptHeader(
+			[
+				'application/json',
+				'application/ld+json',
+				'application/activity+json'
+			]
+		));
+	}
+
+	/**
+	 * @param array $needles
+	 *
+	 * @return bool
+	 */
+	private function areWithinAcceptHeader(array $needles): bool {
+		$accepts = array_map($this->trimHeader(...), explode(',', $this->request->getHeader('Accept')));
+
+		foreach ($accepts as $accept) {
+			if (in_array($accept, $needles)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param string $header
+	 *
+	 * @return string
+	 */
+	private function trimHeader(string $header): string {
+		$header = trim($header);
+		$pos = strpos($header, ';');
+		if ($pos === false) {
+			return $header;
+		}
+
+		return substr($header, 0, $pos);
+	}
+}

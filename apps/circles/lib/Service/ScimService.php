@@ -1,0 +1,226 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Circles\Service;
+
+use Exception;
+use OCA\Circles\AppInfo\Application;
+use OCA\Circles\ConfigLexicon;
+use OCA\Circles\Db\CircleRequest;
+use OCA\Circles\Db\MemberRequest;
+use OCA\Circles\Exceptions\CircleNotFoundException;
+use OCA\Circles\FederatedItems\CircleCreate;
+use OCA\Circles\Model\Circle;
+use OCA\Circles\Model\Federated\FederatedEvent;
+use OCA\Circles\Model\ManagedModel;
+use OCA\Circles\Model\Member;
+use OCA\Circles\Tools\Traits\TStringTools;
+use OCP\AppFramework\Services\IAppConfig;
+use OCP\Http\Client\IClientService;
+use Psr\Log\LoggerInterface;
+
+class ScimService {
+	use TStringTools;
+
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly IClientService $clientService,
+		private readonly CircleRequest $circleRequest,
+		private readonly MemberRequest $memberRequest,
+		private readonly CircleService $circleService,
+		private readonly MemberService $memberService,
+		private readonly PermissionService $permissionService,
+		private readonly FederatedUserService $federatedUserService,
+		private readonly FederatedEventService $federatedEventService,
+		private readonly FederationAgentService $federationAgentService,
+		private readonly LoggerInterface $logger,
+	) {
+	}
+
+	public function syncCircles(): void {
+		$this->federatedUserService->setLocalCurrentApp(Application::APP_ID, Member::APP_CIRCLES);
+
+		$circles = $this->fetchCircles();
+		if ($circles === null) {
+			// don't assume no groups exist on a failed request, to avoid destroying existing circles
+			$this->logger->debug('could not fetch SCIM groups, skipping reconciliation');
+			return;
+		}
+
+		$desiredCircleIds = [];
+		foreach ($circles as $circle) {
+			$circleId = $this->generateCircleIdFromString($circle['id']);
+			$desiredCircleIds[] = $circleId;
+			try {
+				$this->circleRequest->getCircle($circleId);
+				// circle already exists
+				continue;
+			} catch (CircleNotFoundException) {
+			}
+			try {
+				$this->createCircle($circleId, $circle['displayName'], $circle['id']);
+				$this->logger->debug('circle created from SCIM group', ['scimGroupId' => $circle['id'], 'circleId' => $circleId, 'displayName' => $circle['displayName']]);
+			} catch (Exception $e) {
+				$this->logger->error('could not create circle from SCIM group', ['scimGroupId' => $circle['id'], 'exception' => $e]);
+			}
+		}
+
+		// destroy SCIM circles no longer present in SCIM server
+		foreach ($this->circleRequest->getScim() as $circle) {
+			if (in_array($circle->getSingleId(), $desiredCircleIds, true)) {
+				continue;
+			}
+			try {
+				$this->circleService->destroy($circle->getSingleId());
+				$this->logger->debug('circle destroyed, no longer present in SCIM', ['circleId' => $circle->getSingleId()]);
+			} catch (Exception $e) {
+				$this->logger->error('could not destroy circle no longer present in SCIM', ['circleId' => $circle->getSingleId(), 'exception' => $e]);
+			}
+		}
+	}
+
+	public function syncFederatedModerators(): void {
+		$remoteInstances = $this->appConfig->getAppValueArray(ConfigLexicon::SCIM_REMOTE_INSTANCES);
+		if ($remoteInstances === []) {
+			$this->logger->debug('no remote instance configured for SCIM federated moderators, skipping sync');
+			return;
+		}
+
+		$circleIds = array_map(
+			fn ($circle) => $circle->getSingleId(),
+			$this->circleRequest->getScim()
+		);
+
+		if ($circleIds === []) {
+			$this->logger->debug('no SCIM circle known, skipping federated moderators sync');
+			return;
+		}
+
+		$this->federationAgentService->ensureFederationAgentsAsModerators($circleIds, $remoteInstances);
+	}
+
+	/**
+	 * Removes members belonging to the given remote instance from every SCIM circle
+	 */
+	public function removeRemoteInstanceMembers(string $remoteInstance): void {
+		$circleIds = array_map(
+			fn ($circle) => $circle->getSingleId(),
+			$this->circleRequest->getScim()
+		);
+
+		if ($circleIds === []) {
+			$this->logger->debug('no SCIM circle known, skipping instance member removal');
+			return;
+		}
+
+		$this->federatedUserService->setLocalCurrentApp(Application::APP_ID, Member::APP_CIRCLES);
+		$currentApp = $this->federatedUserService->getCurrentApp();
+		$this->federatedUserService->setCurrentUser($currentApp);
+
+		foreach ($circleIds as $circleId) {
+			try {
+				$members = $this->memberRequest->getMembersByCircleIdAndInstance($circleId, $remoteInstance);
+			} catch (Exception $e) {
+				$this->logger->error('could not list members for revoked instance', ['circleId' => $circleId, 'instance' => $remoteInstance, 'exception' => $e]);
+				continue;
+			}
+
+			foreach ($members as $member) {
+				try {
+					$this->memberService->removeMember($member->getId());
+					$this->logger->debug('member from revoked instance removed from circle', ['circleId' => $circleId, 'memberId' => $member->getId(), 'instance' => $remoteInstance]);
+				} catch (Exception $e) {
+					$this->logger->error('could not remove member from revoked instance', ['circleId' => $circleId, 'memberId' => $member->getId(), 'instance' => $remoteInstance, 'exception' => $e]);
+				}
+			}
+		}
+	}
+
+	/**
+	 * TODO: this method needs more work before it's usable. It hasn't been
+	 * tested against a real/test SCIM server yet. For this first development
+	 * iteration, it was assumed the response contains certain keys. This
+	 * needs to be validated (and adjusted if needed) once access to a SCIM
+	 * server is available.
+	 */
+	private function fetchCircles(): ?array {
+		$endpoint = $this->appConfig->getAppValueString(ConfigLexicon::SCIM_ENDPOINT);
+		$token = $this->appConfig->getAppValueString(ConfigLexicon::SCIM_TOKEN);
+
+		$client = $this->clientService->newClient();
+		try {
+			$response = $client->get(rtrim($endpoint, '/') . '/Groups', [
+				'headers' => ['Authorization' => 'Bearer ' . $token],
+			]);
+		} catch (Exception $e) {
+			$this->logger->error('SCIM groups request failed', ['exception' => $e]);
+			return null;
+		}
+
+		$response = json_decode($response->getBody(), true);
+		$this->logger->debug('SCIM groups response: ' . json_encode($response));
+
+		$resources = $response['Resources'] ?? [];
+
+		return array_map(
+			static fn (array $resource): array => [
+				'id' => (string)($resource['id'] ?? ''),
+				'displayName' => (string)($resource['displayName'] ?? ''),
+			],
+			$resources
+		);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function createCircle(string $singleId, string $name, string $externalId): void {
+		$owner = $this->federatedUserService->getCurrentApp();
+
+		$config = Circle::CFG_ROOT + Circle::CFG_FEDERATED + Circle::CFG_SCIM;
+
+		$circle = new Circle();
+		$circle->setName($this->circleService->cleanCircleName($name))
+			->setSingleId($singleId)
+			->setSource(Member::APP_CIRCLES)
+			->setConfig($config)
+			->setSettings([Circle::SETTING_EXTERNAL_ID => $externalId]);
+
+		$this->circleService->confirmName($circle);
+		$this->permissionService->confirmAllowedCircleTypes($circle);
+
+		$member = new Member();
+		$member->importFromIFederatedUser($owner);
+		$member->setId($this->token(ManagedModel::ID_LENGTH))
+			->setCircleId($circle->getSingleId())
+			->setLevel(Member::LEVEL_OWNER)
+			->setStatus(Member::STATUS_MEMBER);
+
+		$this->federatedUserService->setMemberPatron($member);
+
+		$circle->setOwner($member)
+			->setInitiator($member);
+
+		$event = new FederatedEvent(CircleCreate::class);
+		$event->setCircle($circle);
+		$this->federatedEventService->newEvent($event);
+	}
+
+	/**
+	 * TODO: remove this method once fetchCircles() has been validated against a SCIM server
+	 */
+	private function mockGroups(): array {
+		return [
+			['id' => 'urn:geant:company.co:group:dev_vo1#login.company.co', 'displayName' => 'dev_vo1'],
+			['id' => 'urn:geant:company.co:group:dev_vo2#login.company.co', 'displayName' => 'dev_vo2'],
+			['id' => 'urn:geant:company.co:group:dev_vo3#login.company.co', 'displayName' => 'dev_vo3'],
+			['id' => 'urn:geant:company.co:group:dev_vo4#login.company.co', 'displayName' => 'dev_vo4'],
+		];
+	}
+}

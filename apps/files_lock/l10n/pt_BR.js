@@ -1,0 +1,26 @@
+OC.L10N.register(
+    "files_lock",
+    {
+    "File is currently locked by %s" : "O arquivo está atualmente trancado por %s",
+    "File is not locked" : "O arquivo não está trancado",
+    "File can only be locked with update permissions." : "O arquivo só pode ser trancado com permissões de atualização.",
+    "File can only be unlocked by providing a valid owner lock token" : "O arquivo só pode ser destrancado fornecendo um token de trancamento de proprietário válido",
+    "File can only be unlocked by the owner of the lock" : "O arquivo só pode ser destrancado pelo proprietário do trancamento",
+    "Desktop client" : "Cliente Desktop",
+    "iOS client" : "Cliente iOS",
+    "Android client" : "Cliente Android",
+    "Temporary files lock" : "Trancamento temporário de arquivos",
+    "Temporary lock your files" : "Trancar temporariamente seus arquivos",
+    "Allow your users to temporary lock their files to avoid conflicts while working on shared files." : "Permitir que usuários tranquem temporariamente seus arquivos para evitar conflitos enquanto trabalham em arquivos compartilhados.",
+    "Manually locked by {user}" : "Trancado manualmente por {user}",
+    "Locked by editing online in {app}" : "Trancado por edição on-line em {app}",
+    "Automatically locked by {user}" : "Trancado automaticamente por {user}",
+    "Unlock file" : "Destrancar arquivo",
+    "Lock file" : "Trancar arquivo",
+    "files_lock" : "Desbloquear arquivo manualmente",
+    "This file has been locked automatically by a client. Removing the lock may lead to a conflict saving the file." : "Este arquivo foi trancado automaticamente por um cliente. A remoção do trancamento pode levar a um conflito ao salvar o arquivo.",
+    "Keep lock" : "Manter o trancamento",
+    "Force unlock" : "Forçar o destrancamento",
+    "Allow your users to temporary lock their files to avoid conflicts while working on shared files.\n\nℹ️ As of Nextcloud 34 this app is bundled with Nextcloud Hub and hence not released through the appstore anymore." : "Permita que seus usuários tranquem temporariamente seus arquivos para evitar conflitos ao trabalhar em arquivos compartilhados.\n\nℹ️ A partir da versão 34 do Nextcloud, este aplicativo está integrado ao Nextcloud Hub e, portanto, não é mais disponibilizado na loja de aplicativos."
+},
+"nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

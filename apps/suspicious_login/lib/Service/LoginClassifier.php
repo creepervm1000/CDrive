@@ -1,0 +1,131 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\SuspiciousLogin\Service;
+
+use OCA\SuspiciousLogin\Db\SuspiciousLogin;
+use OCA\SuspiciousLogin\Db\SuspiciousLoginMapper;
+use OCA\SuspiciousLogin\Event\SuspiciousLoginEvent;
+use OCA\SuspiciousLogin\Exception\ModelNotFoundException;
+use OCA\SuspiciousLogin\Exception\ServiceException;
+use OCA\SuspiciousLogin\Util\AddressClassifier;
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IRequest;
+use Psr\Log\LoggerInterface;
+use Throwable;
+
+class LoginClassifier {
+
+	public function __construct(
+		private readonly EstimatorService $estimator,
+		private readonly IRequest $request,
+		private readonly LoggerInterface $logger,
+		private readonly SuspiciousLoginMapper $mapper,
+		private readonly ITimeFactory $timeFactory,
+		private readonly IEventDispatcher $dispatcher,
+	) {
+	}
+
+	public function process(string $uid, string $ip) {
+		try {
+			$strategy = AddressClassifier::isIpV4($ip) ? new Ipv4Strategy() : new IpV6Strategy();
+			if ($this->estimator->predict($uid, $ip, $strategy)) {
+				$this->logger->debug("Ip $ip for user $uid is not suspicious");
+				// All good, carry on!
+				return;
+			}
+		} catch (ModelNotFoundException $ex) {
+			$this->logger->debug('Could not predict suspiciousness: ' . $ex->getMessage());
+			// This most likely means there is no trained model yet, so we return early here
+			return;
+		} catch (ServiceException $ex) {
+			$this->logger->warning('Could not predict suspiciousness: ' . $ex->getMessage());
+			// There was an error loading the model, so we return early here
+			return;
+		}
+
+		$this->logger->info("Detected a login from a suspicious login. user=$uid ip=$ip strategy=" . $strategy::getTypeName());
+
+		$login = $this->persistSuspiciousLogin($uid, $ip);
+		$this->notifyUser($uid, $ip, $login);
+	}
+
+	/**
+	 * @param string $uid
+	 * @param string $ip
+	 */
+	private function persistSuspiciousLogin(string $uid, string $ip): ?SuspiciousLogin {
+		try {
+			$entity = new SuspiciousLogin();
+			$entity->setUid($uid);
+			$entity->setIp($ip);
+			$entity->setRequestId($this->request->getId());
+			$entity->setUrl($this->request->getRequestUri());
+			$entity->setCreatedAt($this->timeFactory->getTime());
+
+			$this->mapper->insert($entity);
+
+			return $entity;
+		} catch (Throwable $ex) {
+			$this->logger->critical('could not save the details of a suspicious login', ['exception' => $ex]);
+			return null;
+		}
+	}
+
+	/**
+	 * @param string $uid
+	 * @param string $ip
+	 * @param ?SuspiciousLogin $login If null the user will be notified regardless of training thresholds
+	 */
+	private function notifyUser(string $uid, string $ip, ?SuspiciousLogin $login): void {
+		if ($login === null) {
+			// There was an error persisting the login attempt, so we can not look for related events in the past.
+			// But we should still warn the user and not silently accept that attempt.
+			$event = new SuspiciousLoginEvent($uid, $ip);
+			$this->dispatcher->dispatchTyped($event);
+			return;
+		}
+
+		$now = $this->timeFactory->getTime();
+
+		// Assuming that a suspicious IP is most likely one that hasn't been seen before
+		// (for this user), we'll not send another notification until the data is used
+		// for the model training
+		$secondsSinceLastTraining = TrainingDataConfig::default()->getThreshold() * 60 * 60 * 24;
+		if (count($this->mapper->findRelated($uid, $ip, $login, $now - $secondsSinceLastTraining)) > 0) {
+			$this->logger->debug("Notification for $uid:$ip already sent, waiting until the next training period");
+			$login->setNotificationState(NotificationState::NOT_SENT_DUPLICATE);
+			$this->mapper->update($login);
+			return;
+		}
+
+		$lastTwoDays = count($this->mapper->findRecentByUid($uid, $now - 60 * 60 * 24 * 2));
+		if ($lastTwoDays > 10) {
+			$this->logger->info("Suspicious login peak detected: $uid received $lastTwoDays alerts in the last two days");
+			$login->setNotificationState(NotificationState::NOT_SENT_PEAK_TWO_DAYS);
+			$this->mapper->update($login);
+			return;
+		}
+
+		$lastHour = count($this->mapper->findRecentByUid($uid, $now - 60 * 60));
+		if ($lastHour > 3) {
+			$this->logger->info("Suspicious login peak detected: $uid received $lastHour alerts in the last hour");
+			$login->setNotificationState(NotificationState::NOT_SENT_PEAK_ONE_HOUR);
+			$this->mapper->update($login);
+			return;
+		}
+
+		$event = new SuspiciousLoginEvent($uid, $ip);
+		$this->dispatcher->dispatchTyped($event);
+		$login->setNotificationState(NotificationState::SENT);
+
+		$this->mapper->update($login);
+	}
+}

@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+/**
+ * SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Photos\Sabre\Album;
+
+use OCA\Photos\Album\AlbumFile;
+use Sabre\DAV\Exception\Forbidden;
+use Sabre\DAV\INode;
+
+class PublicAlbumRoot extends AlbumRootBase {
+	#[\Override]
+	public function delete(): never {
+		throw new Forbidden('Not allowed to delete a public album');
+	}
+
+	#[\Override]
+	public function setName($name): never {
+		throw new Forbidden('Not allowed to rename a public album');
+	}
+
+	#[\Override]
+	public function copyInto($targetName, $sourcePath, INode $sourceNode, ?int $depth = null): bool {
+		throw new Forbidden('Not allowed to copy into a public album');
+	}
+
+	#[\Override]
+	public function createFile($name, $data = null) {
+		throw new Forbidden('Not allowed to create a file in a public album');
+	}
+
+	#[\Override]
+	protected function addFile(int $sourceId, string $ownerUID): bool {
+		throw new Forbidden('Not allowed to add a file to a public album');
+	}
+
+	#[\Override]
+	public function getCollaborators(): array {
+		return [];
+	}
+
+	#[\Override]
+	public function getAlbumPhoto(AlbumFile $file): AlbumPhoto {
+		return new PublicAlbumPhoto($this->albumMapper, $this->album->getAlbum(), $file, $this->rootFolder, $this->rootFolder->getUserFolder($this->userId));
+	}
+}

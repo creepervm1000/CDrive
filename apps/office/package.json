@@ -1,0 +1,48 @@
+{
+  "name": "office",
+  "version": "1.1.0-dev.0",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --mode development build",
+    "lint": "eslint src",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "watch": "vite --mode development build --watch"
+  },
+  "browserslist": [
+    "extends @nextcloud/browserslist-config"
+  ],
+  "dependencies": {
+    "@mdi/js": "^7.4.47",
+    "@nextcloud/auth": "^2.6.0",
+    "@nextcloud/axios": "^2.6.0",
+    "@nextcloud/files": "^4.0.0",
+    "@nextcloud/initial-state": "^3.0.0",
+    "@nextcloud/l10n": "^3.4.1",
+    "@nextcloud/router": "^3.1.0",
+    "@nextcloud/vue": "^9.3.1",
+    "vue": "^3.5.41",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@nextcloud/browserslist-config": "^3.1.2",
+    "@nextcloud/eslint-config": "^8.4.2",
+    "@nextcloud/stylelint-config": "^3.1.1",
+    "@nextcloud/vite-config": "^2.5.2",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/test-utils": "^2.4.11",
+    "@vue/tsconfig": "^0.9.1",
+    "jsdom": "^30.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.7",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": "^24.0.0",
+    "npm": "^11.3.0"
+  }
+}

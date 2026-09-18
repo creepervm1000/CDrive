@@ -1,0 +1,145 @@
+/** SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors */
+/** SPDX-License-Identifier: AGPL-3.0-or-later */
+/** CDrive fork: SPDX-FileCopyrightText: 2026 CDrive contributors, AGPL-3.0-or-later. AMOLED black, NO WHITE. */
+:root {
+  --color-main-background: #000000;
+  --color-main-background-rgb: 0,0,0;
+  --color-main-background-translucent: rgba(var(--color-main-background-rgb), .97);
+  --color-main-background-blur: rgba(var(--color-main-background-rgb), .85);
+  --filter-background-blur: blur(25px);
+  --gradient-main-background: var(--color-main-background) 0%, var(--color-main-background-translucent) 85%, transparent 100%;
+  --color-background-hover: #0a0a0a;
+  /** Can be used e.g. to colorize selected table rows */
+  --color-background-dark: #111111;
+  /** This should only be used for elements, not as a text background! Otherwise it will not work for accessibility. */
+  --color-background-darker: #1a1a1a;
+  --color-placeholder-light: #1a1a1a;
+  --color-placeholder-dark: #333333;
+  --color-main-text: #EBEBEB;
+  --color-text-maxcontrast: #A3A3A3;
+  --color-text-maxcontrast-default: #A3A3A3;
+  --color-text-maxcontrast-background-blur: #BDBDBD;
+  --color-text-error: #FF8080;
+  --color-text-success: #6AE86A;
+  --color-border: #1f1f1f;
+  --color-border-dark: #2a2a2a;
+  --color-border-maxcontrast: #666666;
+  --color-border-error: var(--color-element-error);
+  --color-border-success: var(--color-element-success);
+  --color-element-error: #FF5050;
+  --color-element-info: #0099E0;
+  --color-element-success: #40A330;
+  --color-element-warning: #FFCC00;
+  --color-error: #552121;
+  --color-error-hover: #6e2a2a;
+  --color-error-text: #FFCCCC;
+  --color-warning: #3D3010;
+  --color-warning-hover: #4f3e15;
+  --color-warning-text: #FFEEC5;
+  --color-success: #11321A;
+  --color-success-hover: #174423;
+  --color-success-text: #D5F2DC;
+  --color-info: #003553;
+  --color-info-hover: #00466d;
+  --color-info-text: #00AEFF;
+  --color-favorite: #ffde00;
+  --color-mark: #4d3800;
+  --color-background-selection: rgb(from var(--color-primary-element) r g b / 0.2);
+  --color-text-selection: var(--color-main-text);
+  /** @deprecated use css color functions */
+  --color-error-rgb: 85,33,33;
+  /** @deprecated use css color functions */
+  --color-warning-rgb: 61,48,16;
+  /** @deprecated use css color functions */
+  --color-success-rgb: 17,50,26;
+  /** @deprecated use css color functions */
+  --color-info-rgb: 0,53,83;
+  --color-loading-light: #777;
+  --color-loading-dark: #CCC;
+  --color-scrollbar: var(--color-border-maxcontrast) transparent;
+  --color-box-shadow-rgb: 0,0,0;
+  --color-box-shadow: rgba(var(--color-box-shadow-rgb), 0.8);
+  /* Assistant colors */
+  /* Background for AI generated content */
+  --color-background-assistant: #221D2B;
+  /* Border for AI generated content */
+  --color-border-assistant: linear-gradient(125deg, #0C3A65 50%, #6204A5 125%);
+  /* Background for primary buttons to interact with the Assistant (e.g. generate content) */
+  --color-element-assistant: linear-gradient(214deg, #C8A3E8 12%, #007CFF 39%, #C297DD 86%);
+  /* Icon color only to be used for the Assistant icon */
+  --color-element-assistant-icon: linear-gradient(214deg, #CDACE7 15.28%, #008FDB 39.98%, #A180E0 82.05%);
+  --font-face: system-ui, -apple-system, 'Segoe UI', Roboto, Oxygen-Sans, Cantarell, Ubuntu, 'Helvetica Neue', 'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --default-font-size: 15px;
+  --font-size-small: 13px;
+  /* Default text font weight */
+  --font-weight-default: 400;
+  /* Font weight for interactive elements */
+  --font-weight-element: 500;
+  /* Weight for titles and headings */
+  --font-weight-heading: 600;
+  /* 1.5 x font-size for accessibility */
+  --default-line-height: 1.5;
+  --animation-quick: 100ms;
+  --animation-slow: 200ms;
+  /** Border width for input elements such as text fields and selects */
+  --border-width-input: 1px;
+  --border-width-input-focused: 2px;
+
+  /* Border radii (new values) */
+  --border-radius-small: 4px; /* For smaller elements */
+  --border-radius-element: 8px; /* For interactive elements such as buttons, input, navigation and list items */
+  --border-radius-container: 12px; /* For smaller containers like action menus */
+  --border-radius-container-large: 16px; /* For larger containers like body or modals */
+
+  /* Border radii (deprecated) */
+  --border-radius: var(--border-radius-small);
+  --border-radius-large: var(--border-radius-element);
+  --border-radius-rounded: 28px;
+  --border-radius-pill: 100px;
+
+  --default-clickable-area: 34px;
+  --clickable-area-large: 48px;
+  --clickable-area-small: 24px;
+  --default-grid-baseline: 4px;
+
+  --header-height: 44px;
+  --header-menu-item-height: 34px;
+  /* An alpha mask to be applied to all icons on the navigation bar (header menu).
+   * Icons are have a size of 20px but usually we use MDI which have a content of 16px so 2px padding top bottom,
+   * for better gradient we must at first begin at those 2px (10% of height) as start and stop positions.
+   */
+  --header-menu-icon-mask: linear-gradient(var(--color-background-plain-text) 25%, color-mix(in srgb, var(--color-background-plain-text), 55% transparent) 90%) alpha;
+
+  --navigation-width: 300px;
+  --sidebar-min-width: 300px;
+  --sidebar-max-width: 500px;
+  /* Border radius of the body container */
+  --body-container-radius: var(--border-radius-container-large);
+  /* Margin of the body container */
+  --body-container-margin: calc(var(--default-grid-baseline) * 2);
+  /* Height of the body container to fully fill the view port */
+  --body-height: calc(100% - env(safe-area-inset-bottom) - var(--header-height) - var(--body-container-margin));
+  --breakpoint-mobile: 1024px;
+  --background-invert-if-dark: invert(100%);
+  --background-invert-if-bright: no;
+  --background-image-invert-if-bright: no;
+  --primary-invert-if-bright: no;
+  --primary-invert-if-dark: invert(100%);
+  --color-primary: #00C853;
+  --color-primary-text: #000000;
+  --color-primary-hover: #00E676;
+  --color-primary-element: #00C853;
+  --color-primary-element-hover: #00A651;
+  --color-primary-element-text: #000000;
+  --color-primary-element-text-dark: #111111;
+  --color-primary-light: #0a2a16;
+  --color-primary-light-hover: #0f3a1f;
+  --color-primary-light-text: #7BFFB2;
+  --color-primary-element-light: var(--color-primary-light);
+  --color-primary-element-light-text: var(--color-primary-light-text);
+  --color-primary-element-light-hover: var(--color-primary-light-hover);
+  --gradient-primary-background: linear-gradient(40deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  --color-background-plain: #000000;
+  --color-background-plain-text: #EBEBEB;
+  --image-background: url('/apps/theming/img/background/cdrive-amoled-glow.webp');
+}

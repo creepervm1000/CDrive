@@ -1,0 +1,68 @@
+{
+	"autoload": {
+		"psr-4": {
+			"OCA\\Notifications\\": "lib/"
+		}
+	},
+	"name": "nextcloud/notifications",
+	"description": "notifications",
+	"license": "AGPL-3.0-only",
+	"config": {
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"platform": {
+			"php": "8.3"
+		},
+		"sort-packages": true,
+		"allow-plugins": {
+			"bamarni/composer-bin-plugin": true,
+			"php-http/discovery": true
+		}
+	},
+	"scripts": {
+		"post-install-cmd": [
+			"@composer bin all install --ansi",
+			"\"vendor/bin/mozart\" compose",
+			"composer dump-autoload"
+		],
+		"post-update-cmd": [
+			"@composer bin all install --ansi",
+			"\"vendor/bin/mozart\" compose",
+			"composer dump-autoload"
+		],
+		"lint": "find . -name \\*.php -not -path './vendor/*' -not -path './vendor-bin/*' -not -path './tests/Integration/vendor/*' -not -path './build/*' -print0 | xargs -0 -n200 php -l",
+		"cs:check": "php-cs-fixer fix --dry-run --diff",
+		"cs:fix": "php-cs-fixer fix",
+		"openapi": "generate-spec --verbose",
+		"psalm": "psalm --no-cache --threads=$(nproc)",
+		"psalm:dev": "@psalm",
+		"psalm:update-baseline": "psalm --threads=1 --update-baseline",
+		"rector:check": "rector --dry-run --clear-cache",
+		"rector:fix": "rector && php-cs-fixer fix",
+		"test:unit": "phpunit -c tests/Unit/phpunit.xml --colors=always --fail-on-warning --fail-on-risky --display-deprecations --display-phpunit-deprecations",
+		"test:integration": "cd tests/Integration && ./run.sh"
+	},
+	"require": {
+		"bamarni/composer-bin-plugin": "^1.9.1",
+		"guzzlehttp/psr7": "^2.8",
+		"minishlink/web-push": "^11.0"
+	},
+	"extra": {
+		"mozart": {
+			"dep_namespace": "OCA\\Notifications\\Vendor\\",
+			"dep_directory": "/lib/Vendor/",
+			"classmap_directory": "/lib/autoload/",
+			"classmap_prefix": "NEXTCLOUDNOTIFICATIONS_",
+			"packages": [
+				"guzzlehttp/psr7",
+				"minishlink/web-push"
+			],
+			"excluded_packages": [
+				"symfony/deprecation-contracts",
+				"symfony/polyfill-php83",
+				"symfony/polyfill-php82",
+				"symfony/polyfill-php80"
+			]
+		}
+	}
+}

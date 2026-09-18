@@ -1,0 +1,28 @@
+OC.L10N.register(
+    "app_api",
+    {
+    "Cancel" : "Cancel",
+    "Delete" : "Slett",
+    "Edit" : "Rediger",
+    "Unlimited" : "Ubegrensa",
+    "Name" : "Namn",
+    "Host" : "Tenar",
+    "More information" : "Meir informasjon",
+    "Remove" : "Fjern",
+    "Add" : "Legg til",
+    "Save" : "Lagre",
+    "Update to {version}" : "Oppdater til {version}",
+    "Visit website" : "Besøk nettstaden",
+    "Report a bug" : "Rapporter feil",
+    "User documentation" : "Brukardokumentasjon",
+    "Admin documentation" : "Admin-dokumentasjon",
+    "Update to {update}" : "Oppdater til {update}",
+    "Version" : "Utgåve",
+    "Actions" : "Handlingar",
+    "Type" : "Skriv",
+    "Documentation" : "Dokumentasjon",
+    "Details" : "Detaljar",
+    "Enable" : "SLå på",
+    "Disable" : "Slå av"
+},
+"nplurals=2; plural=(n != 1);");

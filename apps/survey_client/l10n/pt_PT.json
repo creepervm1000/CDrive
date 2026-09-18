@@ -1,0 +1,27 @@
+{ "translations": {
+    "Last report sent on: {on}" : "Último reporte enviado em: {on}",
+    "An error occurred while sending your report." : "Ocorreu um erro ao enviar o seu relatório.",
+    "App list <em>(for each app: name, version, enabled status)</em>" : "Lista de aplicações <em>(por cada aplicação: nome, versão, estado de disponibilidade) </em>",
+    "Database environment <em>(type, version, database size)</em>" : "Ambiente de base de dados <em>(tipo, versão, tamanho da base de dados)</em>",
+    "Encryption information <em>(is it enabled?, what is the default module)</em>" : "Informação cifrada <em>(está ativa?, qual é o módulo padrão)</em>",
+    "Number of shares <em>(per type and permission setting)</em>" : "Número de partilhas <em>(por tipo e definição de permissão) </em>",
+    "PHP environment <em>(version, memory limit, max. execution time, max. file size)</em>" : "Ambiente PHP <em>(versão, limite de memória, tempo máximo de execução, tamanho máximo de ficheiros) </em>",
+    "Server instance details <em>(version, memcache used, status of locking/previews/avatars)</em>" : "Detalhes da instância de servidor <em>(versão, memcache usada, estado de bloqueio/pre-visualizações/avatars)</em>",
+    "Statistic <em>(number of files, users, storages per type, comments and tags)</em>" : "Estatísticas <em>(número de ficheiros, utilizadores, armazenamentos por tipo, comentários e etiquetas)</em>",
+    "Usage survey" : "Inquérito de utilização",
+    "Help improve Nextcloud" : "Ajude a melhorar a Nextcloud",
+    "Do you want to help us to improve Nextcloud by providing some anonymized data about your setup and usage? You can disable it at any time in the admin settings again." : "Quer ajudar-nos a melhorar a Nextcloud enviando alguns dados anonimizado sobre a sua configuração e utilização? A qualquer altura pode voltar a desativar o envio nas definições de administrador.",
+    "Send usage" : "Enviar utilização",
+    "Not now" : "Agora não",
+    "Never" : "Nunca",
+    "Sends anonymized data to Nextcloud to help us to improve Nextcloud." : "Envia dados anônimos para o Nextcloud para ajudar a melhorá-lo.",
+    "Sends anonymized data to Nextcloud to help us to improve Nextcloud. You\n\t\talways have full control over the content sent to Nextcloud and can disable\n\t\tit again at any time." : "Envia dados anônimos ao Nextcloud para nos ajudar a melhorar o Nextcloud. Você\n\t\tsempre tem controle total sobre o conteúdo enviado ao Nextcloud e pode desabilitar\n\t\tnovamente a qualquer momento.",
+    "You can help improve Nextcloud by sending us some data about your current setup and usage." : "Pode ajudar-nos a melhorar a Nextcloud enviando alguns dos seus dados sobre a configuração e utilização atuais.",
+    "We take your privacy seriously. Sending data is disabled by default, and should you choose to turn it on, it will be anonymized first, and you are given the option of what things to share. Upon receiving a report, the previous one is removed. To delete the stored usage data, upload an empty report by unchecking all of the boxes then sending a new report." : "Levamos a sua privacidade a sério. O envio de dados está desabilitado por padrão e, se você optar por ativá-lo, eles serão anonimizados primeiro, e você terá a opção de escolher o que deseja compartilhar. Ao receber um relatório, o anterior é removido. Para excluir os dados de uso armazenados, carregue um relatório vazio desmarcando todas as caixas e enviando um novo relatório.",
+    "Send new report now" : "Enviar novo relatório agora",
+    "Send usage survey monthly" : "Enviar formulário de utilização mensalmente",
+    "Data to send" : "Dados a enviar",
+    "Last report" : "Último relatório",
+    "Last report sent on: %s" : "Último reporte enviado em: %s"
+},"pluralForm" :"nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;"
+}

@@ -1,0 +1,24 @@
+{ "translations": {
+    "File is currently locked by %s" : "Filen är för tillfället låst av %s",
+    "File is not locked" : "Filen är inte låst",
+    "File can only be locked with update permissions." : "Filen kan bara låsas med uppdateringsbehörighet.",
+    "File can only be unlocked by providing a valid owner lock token" : "Filen kan endast låsas upp genom att tillhandahålla en giltig token för ägarlåset.",
+    "File can only be unlocked by the owner of the lock" : "Fil kan endast låsas upp av låsets ägare",
+    "Desktop client" : "Desktopklient",
+    "iOS client" : "iOS-klient",
+    "Android client" : "Android-klient",
+    "Temporary files lock" : "Temporär låsning av filer",
+    "Temporary lock your files" : "Temporär låsning av dina filer",
+    "Allow your users to temporary lock their files to avoid conflicts while working on shared files." : "Låt dina användare tillfälligt låsa sina filer för att undvika konflikter när de arbetar med delade filer.",
+    "Manually locked by {user}" : "Manuellt låst av {user}",
+    "Locked by editing online in {app}" : "Låst genom onlineredigering i {app}",
+    "Automatically locked by {user}" : "Automatiskt låst av {user}",
+    "Unlock file" : "Lås upp fil",
+    "Lock file" : "Lås fil",
+    "files_lock" : "files_lock",
+    "This file has been locked automatically by a client. Removing the lock may lead to a conflict saving the file." : "Den här filen har låsts automatiskt av en klient. Borttagning av låset kan leda till en konflikt när filen sparas.",
+    "Keep lock" : "Behåll låset",
+    "Force unlock" : "Tvinga upplåsning",
+    "Allow your users to temporary lock their files to avoid conflicts while working on shared files.\n\nℹ️ As of Nextcloud 34 this app is bundled with Nextcloud Hub and hence not released through the appstore anymore." : "Tillåt dina användare att tillfälligt låsa sina filer för att undvika konflikter när de arbetar med delade filer.\n\nℹ️ Från och med Nextcloud 34 ingår den här appen i Nextcloud Hub och släpps därför inte längre via appbutiken."
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

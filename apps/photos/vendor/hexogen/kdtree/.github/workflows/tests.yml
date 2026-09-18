@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    tests:
+        name: PHP ${{ matrix.php }}
+        runs-on: ubuntu-22.04
+
+        strategy:
+            matrix:
+                php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v3
+              with:
+                  fetch-depth: 10
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php }}
+                  tools: composer:v2
+                  coverage: none
+
+            - name: Setup Problem Matchers
+              run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+            - name: Install PHP Dependencies
+              uses: nick-invision/retry@v2
+              with:
+                  timeout_minutes: 5
+                  max_attempts: 5
+                  command: composer update --no-interaction --no-progress
+
+            - name: Execute PHPcs
+              run:  vendor/bin/phpcs --standard=psr2 src/
+
+            - name: Execute PHPUnit
+              run:  vendor/bin/phpunit

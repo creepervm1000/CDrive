@@ -1,0 +1,14 @@
+/**
+ * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+.icon-app-api {
+	background-image: url('../img/app-dark.svg');
+	filter: var(--background-invert-if-dark);
+}
+
+/* For Nextcloud 27 */
+.menuitem.action > img.icon {
+	filter: var(--background-invert-if-dark);
+}

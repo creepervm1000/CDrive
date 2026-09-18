@@ -1,0 +1,28 @@
+{ "translations": {
+    "Documents" : "Dokumenty",
+    "Spreadsheets" : "Tabulky",
+    "Presentations" : "Prezentace",
+    "Diagrams" : "Diagramy",
+    "Office" : "Kancelář",
+    "Office overview" : "Přehled Office",
+    "Create new" : "Vytvořit nové",
+    "Scroll left" : "Odrolovat doleva",
+    "Scroll right" : "Odrolovat doprava",
+    "Blank" : "Prázdný",
+    "Search {category}" : "Hledat {category}",
+    "Search" : "Hledat",
+    "Recent {category}" : "Nedávné {category}",
+    "Failed to load files" : "Nepodařilo se načíst soubory",
+    "Filter files" : "Filtrovat soubory",
+    "All" : "Vše",
+    "Mine" : "Moje",
+    "Shared with me" : "Sdíleno se mnou",
+    "Starred" : "S hvězdičkou",
+    "Switch to grid view" : "Přepnout do zobrazení v mřížce",
+    "Switch to list view" : "Přepnout do zobrazení v seznamu",
+    "No {category} found" : "Nenalezeno žádné {category}",
+    "Create" : "Vytvářet",
+    "Filename" : "Soubor",
+    "Filename cannot be empty" : "Soubor je třeba nějak nazvat"
+},"pluralForm" :"nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n <= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;"
+}

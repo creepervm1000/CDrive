@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!--
+ - SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
+ - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>serverinfo</id>
+    <name>Monitoring</name>
+    <summary>Monitoring app with useful server information</summary>
+    <description>Provides useful server information, such as CPU load, RAM usage, disk usage, number of users, etc.</description>
+    <version>7.0.0</version>
+    <licence>AGPL-3.0-or-later</licence>
+    <author>Bjoern Schiessle</author>
+    <author>Ivan Sein Santiago</author>
+    <author>Frank Karlitschek</author>
+    <namespace>ServerInfo</namespace>
+    <default_enable/>
+    <category>monitoring</category>
+    <bugs>https://github.com/nextcloud/serverinfo/issues</bugs>
+    <dependencies>
+		<nextcloud min-version="35" max-version="35" />
+    </dependencies>
+	<background-jobs>
+		<job>OCA\ServerInfo\Jobs\UpdateStorageStats</job>
+		<job>OCA\ServerInfo\Jobs\UpdateJobStats</job>
+	</background-jobs>
+	<commands>
+		<command>OCA\ServerInfo\Commands\UpdateStorageStats</command>
+		<command>OCA\ServerInfo\Commands\UpdateJobStats</command>
+	</commands>
+    <settings>
+        <admin>OCA\ServerInfo\Settings\AdminSettings</admin>
+        <admin-section>OCA\ServerInfo\Settings\AdminSection</admin-section>
+    </settings>
+</info>

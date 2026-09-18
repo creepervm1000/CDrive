@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+version = 1
+SPDX-PackageName = "support"
+SPDX-PackageSupplier = "2024 Nextcloud GmbH and Nextcloud contributors"
+SPDX-PackageDownloadLocation = "https://github.com/nextcloud-gmbh/support"
+
+[[annotations]]
+path = [".tx/config", "img/app-dark.svg", "img/app.svg", "img/signature.svg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018 Nextcloud GmbH and Nextcloud contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = ["resources/Why the Nextcloud Subscription.pdf"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018 Nextcloud GmbH"
+SPDX-License-Identifier = "LicenseRef-NextcloudTrademarks"
+
+[[annotations]]
+path = ["composer.json", "composer.lock"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021 Nextcloud GmbH and Nextcloud contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = ["vendor-bin/**/composer.json", "vendor-bin/**/composer.lock", "psalm.xml", "tests/psalm-baseline.xml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "none"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ["package-lock.json", "package.json", ".github/CODEOWNERS"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 Nextcloud GmbH and Nextcloud contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = ["l10n/**.js", "l10n/**.json"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018 Nextcloud translators <https://www.transifex.com/nextcloud/>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = ["img/chat.svg", "img/expiry.svg", "img/notification.svg", "img/section.svg", "img/system-info.svg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2024 Google LLC"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["img/discourse.svg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Civilized Discourse Construction Kit, Inc."
+SPDX-License-Identifier = "LicenseRef-Discourse"
+
+[[annotations]]
+path = ["img/github.svg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "GitHub, Inc."
+SPDX-License-Identifier = "LicenseRef-GithubTrademarks"

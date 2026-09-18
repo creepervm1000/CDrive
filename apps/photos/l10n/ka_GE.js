@@ -1,0 +1,26 @@
+OC.L10N.register(
+    "photos",
+    {
+    "Photos" : "ფოტოები",
+    "Videos" : "ვიდეოები",
+    "Folders" : "დირექტორიები",
+    "Favorites" : "რჩეულები",
+    "Shared with you" : "გაზიარებული თქვენთან",
+    "Tags" : "ტეგები",
+    "Back" : "უკან",
+    "Save" : "შენახვა",
+    "Shared by" : "გამზიარებელი",
+    "Favorite" : "რჩეული",
+    "Go back" : "უკან დაბრუნება",
+    "Remove from favorites" : "რჩეულებიდან ამოშლა",
+    "Delete" : "Delete",
+    "Cancel" : "Cancel",
+    "Location" : "ადგილმდებარეობა",
+    "Dates" : "თარიღები",
+    "Home" : "სახლი",
+    "General" : "ზოგადი",
+    "Default" : "საწყისი პარამეტრები",
+    "Details" : "დეტალები",
+    "Confirm" : "დადასტურება"
+},
+"nplurals=2; plural=(n!=1);");

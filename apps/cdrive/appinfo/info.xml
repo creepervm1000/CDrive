@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!--
+  - SPDX-FileCopyrightText: 2026 CDrive contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>cdrive</id>
+	<name>CDrive</name>
+	<summary>CDrive privacy controls: egress firewall and per-app proxying</summary>
+	<description>Admin settings for the CDrive egress firewall (domain denylist, app allowlist) and forced per-app proxying with failover.</description>
+	<version>1.0.0</version>
+	<licence>AGPL-3.0-or-later</licence>
+	<author>CDrive contributors</author>
+	<namespace>Cdrive</namespace>
+	<category>customization</category>
+	<bugs>https://github.com/nextcloud/server/issues</bugs>
+	<dependencies>
+		<nextcloud min-version="35" max-version="35"/>
+	</dependencies>
+</info>

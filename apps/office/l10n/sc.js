@@ -1,0 +1,19 @@
+OC.L10N.register(
+    "office",
+    {
+    "Documents" : "Documentos",
+    "Office" : "Ofìtziu",
+    "Create new" : "Crea un'archìviu nou",
+    "Blank" : "Isbòidu",
+    "Search" : "Chirca",
+    "All" : "Totu",
+    "Shared with me" : "Cumpartzidos cun megus",
+    "Starred" : "Preferidos",
+    "Switch to grid view" : "Càmbia a vista de mosàicu",
+    "Switch to list view" : "Càmbia a sa vista de s'elencu",
+    "No {category} found" : "Perunu {category} agatadu",
+    "Create" : "Crea",
+    "Filename" : "Nùmene de s'archìviu",
+    "Filename cannot be empty" : "Su nùmene de su documentu non podet èssere bòidu"
+},
+"nplurals=2; plural=(n != 1);");

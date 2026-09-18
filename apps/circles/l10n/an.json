@@ -1,0 +1,26 @@
+{ "translations": {
+    "System" : "Sistema",
+    "Admin" : "Administrador",
+    "Files" : "Archivos",
+    "Invalid file provided" : "Fichero proporcionau no valiu",
+    "File is too big" : "O fichero ye masiau gran",
+    "Invalid image" : "Imachen no valida",
+    "Unknown filetype" : "Tipo de fichero esconoxiu",
+    "Open %s" : "Ubrir %s",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Actions" : "Acions",
+    "Back" : "Ta zaga",
+    "Name" : "Nombre",
+    "Size" : "Grandario",
+    "Modified" : "Modificau",
+    "Home" : "Casa",
+    "Pending" : "Pendient",
+    "Group folders" : "Carpetas de grupo",
+    "Loading…" : "Cargando...",
+    "Group" : "Grupo",
+    "Email" : "Correu electronico",
+    "Users" : "Usuarios",
+    "Groups" : "Grupos"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

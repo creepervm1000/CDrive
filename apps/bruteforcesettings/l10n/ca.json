@@ -1,0 +1,8 @@
+{ "translations": {
+    "Brute-force settings" : "Paràmetres de la força bruta",
+    "Whitelist IPs" : "Adreces IP permeses",
+    "Comment" : "Comentari",
+    "Add" : "Afegeix",
+    "Save" : "Desar"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

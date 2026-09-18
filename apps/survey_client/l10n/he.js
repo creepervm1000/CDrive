@@ -1,0 +1,27 @@
+OC.L10N.register(
+    "survey_client",
+    {
+    "Last report sent on: {on}" : "דוח אחרון נשלח ב־: {on}",
+    "An error occurred while sending your report." : "אירעה שגיאה בשליחת הדוח",
+    "App list <em>(for each app: name, version, enabled status)</em>" : "רשימת יישומים <em>(לכל יישום: שם, גרסה, מצב פעיל)</em>",
+    "Database environment <em>(type, version, database size)</em>" : "סביבת מסד נתונים <em>(סוג, גרסה, גודל מסד נתונים)</em>",
+    "Encryption information <em>(is it enabled?, what is the default module)</em>" : "פרטי הצפנה <em>(פעילה?, מה הוא מודול בררת המחדל)</em>",
+    "Number of shares <em>(per type and permission setting)</em>" : "מספר שיתופים <em>(לפי הגדרות סוג והרשאות)</em>",
+    "PHP environment <em>(version, memory limit, max. execution time, max. file size)</em>" : "סביבת PHP <em>(גרסה, הגבלת זיכרון, זמן הפעלה מרבי, גודל קובץ מרבי)</em>",
+    "Server instance details <em>(version, memcache used, status of locking/previews/avatars)</em>" : "פרטי עותק השרת <em>(גרסה, זיכרון מטמון בשימוש, מצב נעילה/הצגה מקדימה/תמונות ייצוגיות)</em>",
+    "Statistic <em>(number of files, users, storages per type, comments and tags)</em>" : "סטטיסטיקה <em>(מספר קבצים, משתמשים, סוגי אחסון לפי סוג, תגובות ותגיות)</em>",
+    "Usage survey" : "סקר שימוש",
+    "Help improve Nextcloud" : "סיוע בשיפור Nextcloud",
+    "Do you want to help us to improve Nextcloud by providing some anonymized data about your setup and usage? You can disable it at any time in the admin settings again." : "מעניין אותך לסייע לנו לשפר את Nextcloud על ידי שליחת של נתונים אלמוניים בנוגע להתקנה ולשימוש שלך? ניתן להשבית זאת בכל עת דרך ההגדרות.",
+    "Send usage" : "שליחת נתוני שימוש",
+    "Not now" : "לא כעת",
+    "Never" : "אף פעם",
+    "Sends anonymized data to Nextcloud to help us to improve Nextcloud." : "שליחת נתונים אלמוניים ל־Nextcloud כדי לסייע לנו בשיפור Nextcloud.",
+    "You can help improve Nextcloud by sending us some data about your current setup and usage." : "ניתן לסייע בשיפור Nextcloud על ידי שליחת נתונים כלשהם אלינו בנוגע להתקנה הנוכחית ואופן השימוש שלך.",
+    "Send new report now" : "שליחת דוח חדש כעת",
+    "Send usage survey monthly" : "שליחת סקר שימוש חודשי",
+    "Data to send" : "נתונים לשליחה",
+    "Last report" : "דוח אחרון",
+    "Last report sent on: %s" : "הדוח האחרון נשלח ב־: %s"
+},
+"nplurals=3; plural=(n == 1 && n % 1 == 0) ? 0 : (n == 2 && n % 1 == 0) ? 1: 2;");

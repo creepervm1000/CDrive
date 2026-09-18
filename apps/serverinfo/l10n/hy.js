@@ -1,0 +1,25 @@
+OC.L10N.register(
+    "serverinfo",
+    {
+    "Unknown" : "Անհայտ",
+    "Never" : "Երբեք",
+    "Warning" : "Զգուշացում",
+    "Type:" : "Տիպ.",
+    "Size:" : "Չափս.",
+    "User" : "User",
+    "Password" : "գախտնաբառ",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Close" : "Փակել",
+    "Details" : "Մանրամասներ",
+    "seconds" : "վայրկյան",
+    "Yes" : "Այո",
+    "No" : "Ոչ",
+    "Version" : "Տարբերակ",
+    "Copied!" : "Պատճենված է․",
+    "Not supported!" : "Չի՛ սպասարկվում։",
+    "Press ⌘-C to copy." : "Սեղմել ⌘-C պատճենելու համար։",
+    "Press Ctrl-C to copy." : "Սեղմել  Ctrl-C պատճենելու համար։",
+    "Copy" : "պատճենահանել"
+},
+"nplurals=2; plural=(n != 1);");

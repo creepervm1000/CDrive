@@ -1,0 +1,12 @@
+OC.L10N.register(
+    "suspicious_login",
+    {
+    "New login location detected" : "Foi detetada uma nova localização do inicio de sessão",
+    "More info about the suspicious IP address available on %s" : "Mais informações sobre o endereço IP suspeito disponíveis em %s",
+    "A new login into your account was detected. The IP address %s was classified as suspicious by an AI model. If this was you, you can ignore this message, as the AI model did not take any automated actions. Otherwise, you should change your password." : "Foi detectado um novo acesso à sua conta. O endereço IP %s foi classificado como suspeito por um modelo de IA. Se foi você quem acessou, pode ignorar esta mensagem, pois o modelo de IA não tomou nenhuma medida automática. Caso contrário, você deve alterar sua senha.",
+    "Suspicious Login" : "Acesso suspeito",
+    "New login detected" : "Detetado novo acesso",
+    "Detect and warn about suspicious IPs logging into Nextcloud\n\t" : "Detetar e avisar sobre acessos ao Nextcloud a partir de endereços IP suspeitos ",
+    "A new login into your account was detected. The IP address %s was classified as suspicious. If this was you, you can ignore this message. Otherwise you should change your password." : "Foi detetado um novo acesso à sua conta. O endereço IP %s foi classificado como suspeito. Se foi você a aceder, pode ignorar esta mensagem. Caso contrário, deve proceder à alteração da sua palavra-passe."
+},
+"nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

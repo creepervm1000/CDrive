@@ -1,0 +1,19 @@
+{ "translations": {
+    "Documents" : "Skjöl",
+    "Spreadsheets" : "Töflureiknar",
+    "Presentations" : "Kynningar",
+    "Office" : "Skrifstofa",
+    "Create new" : "Búa til nýjan",
+    "Blank" : "Tóm",
+    "Search {category}" : "Leita í {category}",
+    "Search" : "Search",
+    "All" : "Allt",
+    "Starred" : "Stjörnumerkt",
+    "Switch to grid view" : "Skipta yfir í reitasýn",
+    "Switch to list view" : "Skipta yfir í listasýn",
+    "No {category} found" : "Ekkert {category} fannst",
+    "Create" : "Búa til",
+    "Filename" : "Skráarheiti",
+    "Filename cannot be empty" : "Skráarheiti má ekki vera tómt"
+},"pluralForm" :"nplurals=2; plural=(n % 10 != 1 || n % 100 == 11);"
+}

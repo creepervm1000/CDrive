@@ -1,0 +1,25 @@
+OC.L10N.register(
+    "photos",
+    {
+    "Photos" : "Photos",
+    "Favorites" : "Sevimlilər",
+    "Shared with you" : "Shared with you",
+    "Tags" : "Işarələr",
+    "Back" : "Geri",
+    "Save" : "Saxla",
+    "Shared by" : "Tərəfindən yayımlanıb",
+    "Favorite" : "İstəkli",
+    "Remove from favorites" : "Remove from favorites",
+    "Share" : "Yayımla",
+    "Delete" : "Delete",
+    "Cancel" : "Cancel",
+    "Location" : "Yerləşdiyiniz ünvan",
+    "Slideshow" : "Slayd şou",
+    "Home" : "Ev",
+    "General" : "Ümumi",
+    "Start slideshow" : "Slayd şouya başlayın",
+    "Group" : "Qrup",
+    "Details" : "Detallar",
+    "Confirm" : "Təsdiq edin"
+},
+"nplurals=2; plural=(n != 1);");

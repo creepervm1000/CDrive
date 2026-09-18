@@ -1,0 +1,676 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\AppAPI\Controller;
+
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
+use OC\App\AppStore\Fetcher\CategoryFetcher;
+use OC\App\AppStore\Version\VersionParser;
+use OC\App\DependencyAnalyzer;
+use OC\App\Platform;
+use OCA\AppAPI\AppInfo\Application;
+use OCA\AppAPI\DeployActions\DockerActions;
+use OCA\AppAPI\Fetcher\ExAppFetcher;
+use OCA\AppAPI\ResponseDefinitions;
+use OCA\AppAPI\Service\AppAPIService;
+use OCA\AppAPI\Service\DaemonConfigService;
+use OCA\AppAPI\Service\ExAppDeployOptionsService;
+use OCA\AppAPI\Service\ExAppService;
+use OCP\App\IAppManager;
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired;
+use OCP\AppFramework\Http\DataDownloadResponse;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\IConfig;
+use OCP\IL10N;
+use OCP\IRequest;
+use OCP\L10N\IFactory;
+use Psr\Log\LoggerInterface;
+
+/**
+ * ExApps actions controller similar to default one with project-specific changes and additions
+ *
+ * @psalm-import-type AppAPICategory from ResponseDefinitions
+ * @psalm-import-type AppAPIDeployOptions from ResponseDefinitions
+ */
+#[OpenAPI(OpenAPI::SCOPE_ADMINISTRATION)]
+class ExAppsPageController extends Controller {
+
+	public function __construct(
+		IRequest $request,
+		private readonly IConfig $config,
+		private readonly AppAPIService $service,
+		private readonly DaemonConfigService $daemonConfigService,
+		private readonly DockerActions $dockerActions,
+		private readonly CategoryFetcher $categoryFetcher,
+		private readonly IFactory $l10nFactory,
+		private readonly ExAppFetcher $exAppFetcher,
+		private readonly IL10N $l10n,
+		private readonly LoggerInterface $logger,
+		private readonly IAppManager $appManager,
+		private readonly ExAppService $exAppService,
+		private readonly ExAppDeployOptionsService $exAppDeployOptionsService,
+	) {
+		parent::__construct(Application::APP_ID, $request);
+	}
+
+	/**
+	 * Using the same algorithm of ExApps listing as for regular apps.
+	 * Returns all apps for a category from the App Store
+	 *
+	 * @throws Exception
+	 */
+	private function getAppsForCategory(string $requestedCategory = ''): array {
+		$versionParser = new VersionParser();
+		$formattedApps = [];
+		$apps = $this->exAppFetcher->get();
+		foreach ($apps as $app) {
+			$exApp = $this->exAppService->getExApp($app['id']);
+
+			// Skip all apps not in the requested category
+			if ($requestedCategory !== '') {
+				$isInCategory = false;
+				foreach ($app['categories'] as $category) {
+					if ($category === $requestedCategory) {
+						$isInCategory = true;
+					}
+				}
+				if (!$isInCategory) {
+					continue;
+				}
+			}
+
+			// Default PHP and NC versions requirements check preserved
+			if (!isset($app['releases'][0]['rawPlatformVersionSpec'])) {
+				continue;
+			}
+			$nextCloudVersion = $versionParser->getVersion($app['releases'][0]['rawPlatformVersionSpec']);
+			$nextCloudVersionDependencies = [];
+			if ($nextCloudVersion->getMinimumVersion() !== '') {
+				$nextCloudVersionDependencies['nextcloud']['@attributes']['min-version'] = $nextCloudVersion->getMinimumVersion();
+			}
+			if ($nextCloudVersion->getMaximumVersion() !== '') {
+				$nextCloudVersionDependencies['nextcloud']['@attributes']['max-version'] = $nextCloudVersion->getMaximumVersion();
+			}
+			$phpVersion = $versionParser->getVersion($app['releases'][0]['rawPhpVersionSpec']);
+			$existsLocally = $exApp !== null;
+			$phpDependencies = [];
+			if ($phpVersion->getMinimumVersion() !== '') {
+				$phpDependencies['php']['@attributes']['min-version'] = $phpVersion->getMinimumVersion();
+			}
+			if ($phpVersion->getMaximumVersion() !== '') {
+				$phpDependencies['php']['@attributes']['max-version'] = $phpVersion->getMaximumVersion();
+			}
+			if (isset($app['releases'][0]['minIntSize'])) {
+				$phpDependencies['php']['@attributes']['min-int-size'] = $app['releases'][0]['minIntSize'];
+			}
+			$authors = '';
+			foreach ($app['authors'] as $key => $author) {
+				$authors .= $author['name'];
+				if ($key !== count($app['authors']) - 1) {
+					$authors .= ', ';
+				}
+			}
+
+			$currentLanguage = substr($this->l10nFactory->findLanguage(), 0, 2);
+
+			if ($exApp !== null) {
+				$currentVersion = $exApp->getVersion();
+			} else {
+				$currentVersion = $app['releases'][0]['version'];
+			}
+
+			$daemon = null;
+			if ($exApp !== null) {
+				$daemon = $this->daemonConfigService->getDaemonConfigByName($exApp->getDaemonConfigName());
+			}
+
+			$formattedApps[] = [
+				'id' => $app['id'],
+				'app_api' => true,
+				'installed' => $exApp !== null, // if ExApp registered then it's assumed that it was already deployed (installed)
+				'appstore' => true,
+				'name' => $app['translations'][$currentLanguage]['name'] ?? $app['translations']['en']['name'],
+				'description' => $app['translations'][$currentLanguage]['description'] ?? $app['translations']['en']['description'],
+				'summary' => $app['translations'][$currentLanguage]['summary'] ?? $app['translations']['en']['summary'],
+				'license' => $app['releases'][0]['licenses'],
+				'author' => $authors,
+				'shipped' => false,
+				'version' => $currentVersion,
+				'types' => [],
+				'documentation' => [
+					'admin' => $app['adminDocs'],
+					'user' => $app['userDocs'],
+					'developer' => $app['developerDocs']
+				],
+				'website' => $app['website'],
+				'bugs' => $app['issueTracker'],
+				'detailpage' => $app['website'],
+				'dependencies' => array_merge(
+					$nextCloudVersionDependencies,
+					$phpDependencies
+				),
+				'level' => ($app['isFeatured'] === true) ? 200 : 100,
+				'missingMaxOwnCloudVersion' => false,
+				'missingMinOwnCloudVersion' => false,
+				'canInstall' => true,
+				'screenshot' => isset($app['screenshots'][0]['url']) ? 'https://usercontent.apps.nextcloud.com/' . base64_encode($app['screenshots'][0]['url']) : '',
+				'score' => $app['ratingOverall'],
+				'ratingNumOverall' => $app['ratingNumOverall'],
+				'ratingNumThresholdReached' => $app['ratingNumOverall'] > 5,
+				'removable' => $existsLocally,
+				'active' => $exApp !== null && $exApp->getEnabled() === 1,
+				'needsDownload' => !$existsLocally,
+				'groups' => [],
+				'fromAppStore' => true,
+				'appstoreData' => $app,
+				'daemon' => $daemon,
+				'status' => $exApp !== null ? $exApp->getStatus() : [],
+				'error' => $exApp !== null ? $exApp->getStatus()['error'] ?? '' : '',
+			];
+		}
+
+		return $formattedApps;
+	}
+
+	/**
+	 * Get the list of ExApps available in the App Store together with locally installed ones
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, array{apps: list<array<string, mixed>>, status: string}, array{}>
+	 *
+	 * 200: ExApps list returned
+	 */
+	#[NoCSRFRequired]
+	public function listApps(): JSONResponse {
+		$apps = $this->getAppsForCategory('');
+		$appsWithUpdate = $this->exAppFetcher->getExAppsWithUpdates();
+
+		$exApps = $this->exAppService->getExAppsList('all');
+		$dependencyAnalyzer = new DependencyAnalyzer(new Platform($this->config), $this->l10n);
+
+		$ignoreMaxApps = $this->config->getSystemValue('app_install_overwrite', []);
+		if (!is_array($ignoreMaxApps)) {
+			$this->logger->warning('The value given for app_install_overwrite is not an array. Ignoring...');
+			$ignoreMaxApps = [];
+		}
+
+		// Extend existing app details
+		$apps = array_map(function (array $appData) use ($appsWithUpdate, $dependencyAnalyzer, $ignoreMaxApps) {
+			if (isset($appData['appstoreData'])) {
+				$appstoreData = $appData['appstoreData'];
+				$appData['screenshot'] = isset($appstoreData['screenshots'][0]['url']) ? 'https://usercontent.apps.nextcloud.com/' . base64_encode($appstoreData['screenshots'][0]['url']) : '';
+				$appData['category'] = $appstoreData['categories'];
+				$appData['releases'] = $appstoreData['releases'];
+			}
+
+			$appIdsWithUpdate = array_map(function (array $appWithUpdate) {
+				return $appWithUpdate['id'];
+			}, $appsWithUpdate);
+			if (in_array($appData['id'], $appIdsWithUpdate)) {
+				$appData['update'] = array_values(array_filter($appsWithUpdate, function ($appUpdate) use ($appData) {
+					return $appUpdate['id'] === $appData['id'];
+				}))[0]['releases'][0]['version'];
+			}
+
+			$appData['canUnInstall'] = !$appData['active'] && $appData['removable']
+				&& (isset($appData['status']['action']) && $appData['status']['action'] !== 'deploy')
+				|| (isset($appData['status']['action']) && $appData['status']['action'] === 'init')
+				|| !empty($appData['status']['error']);
+
+			// fix licence vs license
+			if (isset($appData['license']) && !isset($appData['licence'])) {
+				$appData['licence'] = $appData['license'];
+			}
+
+			$ignoreMax = in_array($appData['id'], $ignoreMaxApps);
+
+			// analyse dependencies
+			$missing = $dependencyAnalyzer->analyze($appData, $ignoreMax);
+			$appData['canInstall'] = empty($missing);
+			$appData['missingDependencies'] = $missing;
+
+			$appData['missingMinOwnCloudVersion'] = !isset($appData['dependencies']['nextcloud']['@attributes']['min-version']);
+			$appData['missingMaxOwnCloudVersion'] = !isset($appData['dependencies']['nextcloud']['@attributes']['max-version']);
+			$appData['isCompatible'] = $dependencyAnalyzer->isMarkedCompatible($appData);
+
+			return $appData;
+		}, $apps);
+
+		$apps = $this->buildLocalAppsList($apps, $exApps);
+
+		usort($apps, [$this, 'sortApps']);
+
+		return new JSONResponse(['apps' => $apps, 'status' => 'success']);
+	}
+
+	/**
+	 * Prepare list of local ExApps with required data structure to be listed in UI.
+	 * This is a temporal solution to display local apps with lack of information about it until
+	 * it's support extended.
+	 *
+	 * @param array $apps Formatted list of apps available in App Store
+	 * @param array $exApps List of registered ExApps (could be not listed in App Store)
+	 *
+	 * @return array
+	 */
+	private function buildLocalAppsList(array $apps, array $exApps): array {
+		$registeredAppsIds = array_map(function ($app) {
+			return $app['id'];
+		}, $apps);
+		$formattedLocalApps = [];
+		$auth = [];
+		foreach ($exApps as $app) {
+			if (!in_array($app['id'], $registeredAppsIds)) {
+				$exApp = $this->exAppService->getExApp($app['id']);
+				$daemon = $this->daemonConfigService->getDaemonConfigByName($exApp->getDaemonConfigName());
+
+				$formattedLocalApps[] = [
+					'id' => $app['id'],
+					'app_api' => true,
+					'appstore' => false,
+					'installed' => true,
+					'name' => $exApp->getName(),
+					'description' => $this->l10n->t('This app is not installed from the AppStore. No extra information available. Only enable/disable and remove actions are allowed.'),
+					'summary' => '',
+					'license' => '',
+					'licence' => '',
+					'author' => '',
+					'shipped' => false,
+					'version' => $exApp->getVersion(),
+					'types' => [],
+					'documentation' => [
+						'admin' => '',
+						'user' => '',
+						'developer' => ''
+					],
+					'website' => '',
+					'bugs' => '',
+					'detailpage' => '',
+					'dependencies' => [],
+					'level' => 100,
+					'missingMaxOwnCloudVersion' => false,
+					'missingMinOwnCloudVersion' => false,
+					'canInstall' => true, // to allow "remove" command for manual-install
+					'canUnInstall' => !($exApp->getEnabled() === 1),
+					'isCompatible' => true,
+					'screenshot' => '',
+					'score' => 0,
+					'ratingNumOverall' => 0,
+					'ratingNumThresholdReached' => false,
+					'removable' => true, // to allow "remove" command for manual-install
+					'active' => $exApp->getEnabled() === 1,
+					'needsDownload' => false,
+					'groups' => [],
+					'fromAppStore' => false,
+					'appstoreData' => $app,
+					'daemon' => $daemon,
+					'exAppUrl' => $this->service->getExAppUrl($exApp, $exApp->getPort(), $auth),
+					'releases' => [],
+					'update' => null,
+					'status' => $exApp->getStatus(),
+					'error' => $exApp->getStatus()['error'] ?? '',
+				];
+			}
+		}
+		return array_merge($apps, $formattedLocalApps);
+	}
+
+	/**
+	 * Deploy and enable, or just enable, an ExApp
+	 *
+	 * @param string $appId ID of the ExApp
+	 * @param string $daemonId Name of the deploy daemon to use
+	 * @param array<string, mixed> $deployOptions Deploy options (environment variables, mounts)
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, array{data?: array{update_required?: bool}}, array{}>|JSONResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{data: array{message: string}}, array{}>
+	 *
+	 * 200: ExApp enabled
+	 * 500: ExApp could not be enabled
+	 */
+	#[PasswordConfirmationRequired]
+	public function enableApp(string $appId, string $daemonId, array $deployOptions = []): JSONResponse {
+		$updateRequired = false;
+		$exApp = $this->exAppService->getExApp($appId);
+
+		$envOptions = isset($deployOptions['environment_variables'])
+			? array_keys($deployOptions['environment_variables']) : [];
+		$envArgs = [];
+		foreach ($envOptions as $envOption) {
+			$envArgs[] = '--env';
+			$envArgs[] = sprintf('%s=%s', $envOption, $deployOptions['environment_variables'][$envOption]);
+		}
+
+		$mountOptions = $deployOptions['mounts'] ?? [];
+		$mountArgs = [];
+		foreach ($mountOptions as $mountOption) {
+			$readonlyModifier = $mountOption['readonly'] ? 'ro' : 'rw';
+			$mountArgs[] = '--mount';
+			$mountArgs[] = sprintf('%s:%s:%s', $mountOption['hostPath'], $mountOption['containerPath'], $readonlyModifier);
+		}
+
+		// If ExApp is not registered - then it's a "Deploy and Enable" action.
+		if (!$exApp) {
+			$commandParts = array_merge(
+				[
+					'app_api:app:register',
+					'--silent',
+					$appId,
+					$daemonId,
+				],
+				$envArgs,
+				$mountArgs
+			);
+			if (!$this->service->runOccCommand($commandParts)) {
+				return new JSONResponse(['data' => ['message' => $this->l10n->t('Error starting install of ExApp')]], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+			$elapsedTime = 0;
+			while ($elapsedTime < 5000000 && !$this->exAppService->getExApp($appId)) {
+				usleep(150000); // 0.15
+				$elapsedTime += 150000;
+			}
+			if (!$this->exAppService->getExApp($appId)) {
+				return new JSONResponse(['data' => ['message' => $this->l10n->t('Could not perform installation of ExApp')]], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+			return new JSONResponse([]);
+		}
+
+		$appsWithUpdate = $this->exAppFetcher->getExAppsWithUpdates();
+		$appIdsWithUpdate = array_map(function (array $appWithUpdate) {
+			return $appWithUpdate['id'];
+		}, $appsWithUpdate);
+
+		if (in_array($appId, $appIdsWithUpdate)) {
+			$updateRequired = true;
+		}
+
+		if (!$this->service->enableExApp($exApp)) {
+			return new JSONResponse(['data' => ['message' => $this->l10n->t('Failed to enable ExApp')]], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+		return new JSONResponse(['data' => ['update_required' => $updateRequired]]);
+	}
+
+	/**
+	 * Disable an ExApp
+	 *
+	 * @param string $appId ID of the ExApp
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, list<empty>, array{}>|JSONResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{data: array{message: string}}, array{}>
+	 *
+	 * 200: ExApp disabled
+	 * 500: ExApp could not be disabled
+	 */
+	#[PasswordConfirmationRequired]
+	public function disableApp(string $appId): JSONResponse {
+		$exApp = $this->exAppService->getExApp($appId);
+		if ($exApp) {
+			if ($exApp->getEnabled()) {
+				if (!$this->service->disableExApp($exApp)) {
+					return new JSONResponse(['data' => ['message' => $this->l10n->t('Failed to disable ExApp')]], Http::STATUS_INTERNAL_SERVER_ERROR);
+				}
+			}
+		}
+		return new JSONResponse([]);
+	}
+
+	/**
+	 * Update an ExApp
+	 *
+	 * @param string $appId ID of the ExApp
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, list<empty>, array{}>|JSONResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{data: array{message: string}}, array{}>
+	 *
+	 * 200: ExApp updated
+	 * 500: ExApp could not be updated
+	 */
+	#[PasswordConfirmationRequired]
+	#[NoCSRFRequired]
+	public function updateApp(string $appId): JSONResponse {
+		$appsWithUpdate = $this->exAppFetcher->getExAppsWithUpdates();
+		$appIdsWithUpdate = array_map(function (array $appWithUpdate) {
+			return $appWithUpdate['id'];
+		}, $appsWithUpdate);
+		if (!in_array($appId, $appIdsWithUpdate)) {
+			return new JSONResponse(['data' => ['message' => $this->l10n->t('Could not update ExApp')]], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		$exAppOldVersion = $this->exAppService->getExApp($appId)->getVersion();
+		$commandParts = [
+			'app_api:app:update',
+			'--silent',
+			$appId,
+		];
+		if (!$this->service->runOccCommand($commandParts)) {
+			return new JSONResponse(['data' => ['message' => $this->l10n->t('Error starting update of ExApp')]], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		$elapsedTime = 0;
+		while ($elapsedTime < 5000000) {
+			$exApp = $this->exAppService->getExApp($appId);
+			if ($exApp && ($exApp->getStatus()['type'] == 'update' || $exApp->getVersion() !== $exAppOldVersion)) {
+				break;
+			}
+			usleep(150000); // 0.15
+			$elapsedTime += 150000;
+		}
+		if ($elapsedTime >= 5000000) {
+			return new JSONResponse(['data' => ['message' => $this->l10n->t('Could not perform update of ExApp')]], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+		return new JSONResponse();
+	}
+
+	/**
+	 * Unregister an ExApp and optionally remove its container and data
+	 *
+	 * @param string $appId ID of the ExApp
+	 * @param bool $removeContainer Whether to remove the ExApp container
+	 * @param bool $removeData Whether to remove the ExApp data volume
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, list<empty>, array{}>
+	 *
+	 * 200: ExApp uninstalled
+	 */
+	#[PasswordConfirmationRequired]
+	public function uninstallApp(string $appId, bool $removeContainer = true, bool $removeData = false): JSONResponse {
+		$exApp = $this->exAppService->getExApp($appId);
+		if ($exApp) {
+			if ($exApp->getEnabled()) {
+				$this->service->disableExApp($exApp);
+			}
+
+			$daemonConfig = $this->daemonConfigService->getDaemonConfigByName($exApp->getDaemonConfigName());
+			if ($daemonConfig->getAcceptsDeployId() === $this->dockerActions->getAcceptsDeployId()) {
+				$this->dockerActions->initGuzzleClient($daemonConfig);
+				if (boolval($exApp->getDeployConfig()['harp'] ?? false)) {
+					$this->dockerActions->removeExApp($this->dockerActions->buildDockerUrl($daemonConfig), $exApp->getAppid(), removeData: $removeData);
+				} else {
+					if ($removeContainer) {
+						$this->dockerActions->removeContainer($this->dockerActions->buildDockerUrl($daemonConfig), $this->dockerActions->buildExAppContainerName($appId));
+						if ($removeData) {
+							$this->dockerActions->removeVolume($this->dockerActions->buildDockerUrl($daemonConfig), $this->dockerActions->buildExAppVolumeName($appId));
+						}
+					}
+				}
+			}
+			$this->exAppService->unregisterExApp($appId);
+		}
+		return new JSONResponse();
+	}
+
+	/**
+	 * Mark an ExApp as compatible with the current Nextcloud version
+	 *
+	 * @param string $appId ID of the ExApp
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, list<empty>, array{}>
+	 *
+	 * 200: Compatibility requirement overwritten
+	 */
+	#[PasswordConfirmationRequired]
+	public function force(string $appId): JSONResponse {
+		$appId = $this->appManager->cleanAppId($appId);
+
+		// Same effect as the non-public OC\App\AppManager::overwriteNextcloudRequirement(),
+		// except that a corrupt (non-array) value is repaired instead of raising a TypeError.
+		// The same system value is read back in getAppsForCategory().
+		$ignoreMaxApps = $this->config->getSystemValue('app_install_overwrite', []);
+		if (!is_array($ignoreMaxApps)) {
+			$this->logger->warning('The value given for app_install_overwrite is not an array. Ignoring...');
+			$ignoreMaxApps = [];
+		}
+		if (!in_array($appId, $ignoreMaxApps, true)) {
+			$ignoreMaxApps[] = $appId;
+			$this->config->setSystemValue('app_install_overwrite', $ignoreMaxApps);
+		}
+		return new JSONResponse();
+	}
+
+	/**
+	 * Get all available App Store categories
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, list<AppAPICategory>, array{}>
+	 *
+	 * 200: Categories returned
+	 */
+	public function listCategories(): JSONResponse {
+		return new JSONResponse($this->getAllCategories());
+	}
+
+	/**
+	 * Get the status of an ExApp, including its initialization information
+	 *
+	 * @param string $appId ID of the ExApp
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, array<string, mixed>, array{}>|JSONResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: ExApp status returned
+	 * 404: ExApp not found
+	 */
+	#[NoCSRFRequired]
+	public function getAppStatus(string $appId): JSONResponse {
+		$exApp = $this->exAppService->getExApp($appId);
+		if (is_null($exApp)) {
+			return new JSONResponse(['error' => $this->l10n->t('ExApp not found, failed to get status')], Http::STATUS_NOT_FOUND);
+		}
+		return new JSONResponse($exApp->getStatus());
+	}
+
+	/**
+	 * Download the container logs of an ExApp
+	 *
+	 * @param string $appId ID of the ExApp
+	 * @param string $tail Number of lines to return from the end of the logs, or 'all'
+	 *
+	 * @return DataDownloadResponse<Http::STATUS_OK, 'text/plain', array{}>
+	 *
+	 * 200: ExApp logs returned
+	 */
+	#[NoCSRFRequired]
+	public function getAppLogs(string $appId, string $tail = 'all'): DataDownloadResponse {
+		$exApp = $this->exAppService->getExApp($appId);
+		if (is_null($exApp)) {
+			return new DataDownloadResponse(
+				json_encode(['error' => $this->l10n->t('ExApp not found, failed to get logs')]),
+				$this->dockerActions->buildExAppContainerName($appId) . '_logs.txt',
+				'text/plain'
+			);
+		}
+		$daemonConfig = $this->daemonConfigService->getDaemonConfigByName($exApp->getDaemonConfigName());
+		$this->dockerActions->initGuzzleClient($daemonConfig);
+		try {
+			$logs = $this->dockerActions->getContainerLogs(
+				$this->dockerActions->buildDockerUrl($daemonConfig),
+				$this->dockerActions->buildExAppContainerName($appId),
+				$tail
+			);
+			return new DataDownloadResponse(
+				$logs,
+				$this->dockerActions->buildExAppContainerName($appId) . '_logs.txt', 'text/plain',
+				Http::STATUS_OK
+			);
+		} catch (GuzzleException $e) {
+			return new DataDownloadResponse(
+				json_encode(['error' => $this->l10n->t('Failed to get container logs. Note: Downloading Docker container works only for containers with the json-file or journald logging driver. Error: %s', [$e->getMessage()])]),
+				$this->dockerActions->buildExAppContainerName($appId) . '_logs.txt',
+				'text/plain'
+			);
+		}
+	}
+
+	/**
+	 * Get the deploy options of an ExApp
+	 *
+	 * @param string $appId ID of the ExApp
+	 *
+	 * @return JSONResponse<Http::STATUS_OK, AppAPIDeployOptions, array{}>|JSONResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: Deploy options returned
+	 * 404: ExApp not found
+	 */
+	public function getAppDeployOptions(string $appId) {
+		$exApp = $this->exAppService->getExApp($appId);
+		if (is_null($exApp)) {
+			return new JSONResponse(['error' => $this->l10n->t('ExApp not found, failed to get deploy options')], Http::STATUS_NOT_FOUND);
+		}
+
+		$deployOptions = $this->exAppDeployOptionsService->formatDeployOptions(
+			$this->exAppDeployOptionsService->getDeployOptions($appId)
+		);
+
+		$envs = [];
+		if (isset($deployOptions['environment_variables'])) {
+			$envs = $deployOptions['environment_variables'];
+		}
+
+		$mounts = [];
+		if (isset($deployOptions['mounts'])) {
+			foreach ($deployOptions['mounts'] as $mount) {
+				$mounts[] = [
+					'hostPath' => $mount['source'],
+					'containerPath' => $mount['target'],
+					'readonly' => $mount['mode'] === 'ro'
+				];
+			}
+		}
+
+		return new JSONResponse([
+			'environment_variables' => $envs,
+			'mounts' => $mounts,
+		]);
+	}
+
+	/**
+	 * Using default methods to fetch App Store categories as they are the same for ExApps
+	 *
+	 * @return mixed
+	 */
+	private function getAllCategories(): array {
+		$currentLang = substr($this->l10nFactory->findLanguage(), 0, 2);
+		$categories = $this->categoryFetcher->get();
+		return array_map(function (array $category) use ($currentLang) {
+			return [
+				'id' => $category['id'],
+				'ident' => $category['id'],
+				'displayName' => $category['translations'][$currentLang]['name'] ?? $category['translations']['en']['name']
+			];
+		}, $categories);
+	}
+
+	private function sortApps($a, $b): int {
+		$a = (string)$a['name'];
+		$b = (string)$b['name'];
+		if ($a === $b) {
+			return 0;
+		}
+		return ($a < $b) ? -1 : 1;
+	}
+}

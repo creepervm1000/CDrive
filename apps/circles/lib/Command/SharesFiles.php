@@ -1,0 +1,275 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2021 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Circles\Command;
+
+use InvalidArgumentException;
+use OC\Core\Command\Base;
+use OCA\Circles\Exceptions\FederatedUserException;
+use OCA\Circles\Exceptions\FederatedUserNotFoundException;
+use OCA\Circles\Exceptions\InvalidIdException;
+use OCA\Circles\Exceptions\RequestBuilderException;
+use OCA\Circles\Exceptions\SingleCircleNotFoundException;
+use OCA\Circles\Model\Circle;
+use OCA\Circles\Model\Probes\CircleProbe;
+use OCA\Circles\Model\ShareWrapper;
+use OCA\Circles\Service\ConfigService;
+use OCA\Circles\Service\FederatedUserService;
+use OCA\Circles\Service\ShareWrapperService;
+use OCA\Circles\Tools\Traits\TArrayTools;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
+
+/**
+ * Class SharesFilesList
+ *
+ * @package OCA\Circles\Command
+ */
+class SharesFiles extends Base {
+	use TArrayTools;
+
+	private int $fileId = 0;
+
+	public function __construct(
+		private FederatedUserService $federatedUserService,
+		private ShareWrapperService $shareWrapperService,
+		private ConfigService $configService,
+	) {
+		parent::__construct();
+	}
+
+	protected function configure() {
+		parent::configure();
+		$this->setName('circles:shares:files')
+			->setDescription('listing shares files')
+			->addArgument('file_id', InputArgument::OPTIONAL, 'filter on a File Id', '0')
+			->addOption('to', '', InputOption::VALUE_REQUIRED, 'get files shared TO CIRCLEID', '')
+			->addOption('with', '', InputOption::VALUE_REQUIRED, 'get files shared WITH USERID', '')
+			->addOption('by', '', InputOption::VALUE_REQUIRED, 'get files shared BY USERID', '')
+			->addOption('all', '', InputOption::VALUE_NONE, 'get all data about the shares');
+	}
+
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 *
+	 * @return int
+	 * @throws FederatedUserException
+	 * @throws FederatedUserNotFoundException
+	 * @throws InvalidIdException
+	 * @throws RequestBuilderException
+	 * @throws SingleCircleNotFoundException
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output): int {
+		$this->fileId = (int)$input->getArgument('file_id');
+		$json = (strtolower((string)$input->getOption('output')) === 'json');
+
+		$this->displayShares(
+			(int)$input->getArgument('file_id'),
+			$input->getOption('to'),
+			$input->getOption('with'),
+			$input->getOption('by'),
+			$input->getOption('all'),
+			$json
+		);
+
+		return 0;
+		//
+		//		if ($input->getOption('to')) {
+		//			$this->sharedToCircle(
+		//				$input->getOption('to'),
+		//				$input->getOption('with'),
+		//				$input->getOption('by'),
+		//				$input->getOption('all'),
+		//				$json
+		//			);
+		//
+		//			return 0;
+		//		}
+		//
+		//		if ($input->getOption('with')) {
+		//			$this->sharedWith($input->getOption('with'), $json);
+		//
+		//			return 0;
+		//		}
+		//
+		//		if ($input->getOption('by')) {
+		//			$this->sharesBy($input->getOption('by'), $json);
+		//
+		//			return 0;
+		//		}
+		//
+		//		if ($this->fileId > 0) {
+		//			$this->sharedFile($json);
+		//
+		//			return 0;
+		//		}
+	}
+
+	/**
+	 * @param int $fileId
+	 * @param string $to
+	 * @param string $with
+	 * @param string $by
+	 * @param bool $all
+	 * @param bool $json
+	 *
+	 * @throws FederatedUserException
+	 * @throws FederatedUserNotFoundException
+	 * @throws InvalidIdException
+	 * @throws RequestBuilderException
+	 * @throws SingleCircleNotFoundException
+	 */
+	private function displayShares(
+		int $fileId,
+		string $to,
+		string $with,
+		string $by,
+		bool $all,
+		bool $json,
+	): void {
+		$shareWrappers = $this->getShares($fileId, $to, $with, $by, $all, $filterRecipient);
+
+		$output = new ConsoleOutput();
+		if ($json) {
+			$output->writeln(json_encode($shareWrappers, JSON_PRETTY_PRINT));
+
+			return;
+		}
+
+		$output = $output->section();
+		$table = new Table($output);
+		$headers = [
+			'Share Id',
+			'File Id',
+			'File Owner',
+			'Original Filename',
+			'Shared By',
+			'Shared To'
+		];
+
+		if (!$filterRecipient) {
+			$headers = array_merge($headers, ['Recipient', 'Target Name']);
+		}
+
+		$table->setHeaders($headers);
+
+		$rows = [];
+		foreach ($shareWrappers as $share) {
+			if (!$filterRecipient) {
+				$recipient = $share->getInitiator();
+				$sharedTo = $recipient->getDisplayName();
+				if (!$this->configService->isLocalInstance($recipient->getInstance())) {
+					$sharedTo .= '@' . $recipient->getInstance();
+				}
+			}
+			$circleField = '';
+			if ($share->hasCircle()) {
+				$circle = $share->getCircle();
+				$circleField = $circle->getDisplayName()
+					. ' (' . $share->getSharedWith()
+					. ', ' . Circle::$DEF_SOURCE[$circle->getSource()] . ')';
+			}
+			$row = [
+				$share->getId(),
+				$share->getFileSource(),
+				$share->getShareOwner(),
+				$share->getFileTarget(),
+				$share->getSharedBy(),
+				$circleField,
+			];
+
+			if (!$filterRecipient) {
+				$def = ($recipient->hasBasedOn()) ? Circle::$DEF_SOURCE[$recipient->getBasedOn()->getSource()] : 'undef';
+				$row = array_merge(
+					$row, [
+						$sharedTo . ' (' . $recipient->getSingleId() . ', ' . $def . ')',
+						(($share->getChildId() > 0) ? $share->getChildFileTarget(
+						) : $share->getFileTarget()),
+					]
+				);
+			}
+
+			$rows[] = $row;
+		}
+
+		$table->setRows($rows);
+		$table->render();
+	}
+
+	/**
+	 * @param int $fileId
+	 * @param string $to
+	 * @param string $with
+	 * @param string $by
+	 * @param bool $all
+	 * @param bool|null $filterRecipient
+	 *
+	 * @return ShareWrapper[]
+	 * @throws FederatedUserException
+	 * @throws FederatedUserNotFoundException
+	 * @throws InvalidIdException
+	 * @throws RequestBuilderException
+	 * @throws SingleCircleNotFoundException
+	 */
+	private function getShares(
+		int $fileId,
+		string $to,
+		string $with,
+		string $by,
+		bool $all,
+		?bool &$filterRecipient = false,
+	): array {
+		if ($fileId > 0) {
+			return $this->shareWrapperService->getSharesByFileId($this->fileId, true);
+		}
+
+		if ($to !== '') {
+			$filterRecipient = !$all;
+
+			return $this->shareWrapperService->getSharesToCircle(
+				$to,
+				($with === '') ? null : $this->federatedUserService->getLocalFederatedUser($with),
+				($by === '') ? null : $this->federatedUserService->getLocalFederatedUser($by),
+				$all
+			);
+		}
+
+		if ($by !== '') {
+			$filterRecipient = !$all;
+
+			return $this->shareWrapperService->getSharesBy(
+				$this->federatedUserService->getLocalFederatedUser($by),
+				$fileId,
+				true,
+				-1,
+				0,
+				true,
+				$all
+			);
+		}
+
+		if ($with !== '') {
+			$probe = new CircleProbe();
+			$probe->includePersonalCircles();
+
+			return $this->shareWrapperService->getSharedWith(
+				$this->federatedUserService->getLocalFederatedUser($with),
+				$fileId,
+				$probe
+			);
+		}
+
+		throw new InvalidArgumentException('Specify a FileId or an option: --with (USER), --by (USER), --to (CIRCLE)');
+	}
+}

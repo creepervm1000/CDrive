@@ -1,0 +1,15 @@
+OC.L10N.register(
+    "recommendations",
+    {
+    "Recommended files" : "File consigliati",
+    "Recommendations" : "Consigli",
+    "Shows recommended files" : "Mostra i file consigliati",
+    "Shows recommended files for quick access of files and folders with recent activity" : "Mostra i file consigliati per accedere rapidamente a file e cartelle con attività recente",
+    "No recommendations yet" : "Ancora nessun consiglio",
+    "Last updated {timeAgo}" : "Ultimo aggiornamento {timeAgo}",
+    "Shared with you {timeAgo}" : "Condiviso con te {timeAgo}",
+    "Last commented on {timeAgo}" : "Commentato l'ultima volta {timeAgo}",
+    "Path name {path}" : "Nome percorso {path}",
+    "Show recommendations" : "Mostra consigli"
+},
+"nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

@@ -1,0 +1,62 @@
+{
+  "name": "privacy",
+  "version": "7.0.0-dev.0",
+  "description": "Place this app in **nextcloud/apps/**",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --mode development",
+    "watch": "vite build --mode development --watch",
+    "serve": "vite",
+    "lint": "eslint --ext .js,.ts,.vue src",
+    "lint:fix": "eslint --ext .js,.ts,.vue src --fix",
+    "stylelint": "stylelint src",
+    "stylelint:fix": "stylelint src --fix",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "homepage": "https://github.com/nextcloud/privacy",
+  "bugs": {
+    "url": "https://github.com/nextcloud/privacy/issues"
+  },
+  "repository": {
+    "url": "git+https://github.com/nextcloud/privacy.git",
+    "type": "git"
+  },
+  "author": "Georg Ehrke",
+  "contributors": [
+    "John Molakvoæ <skjnldsv@protonmail.com>"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@nextcloud/auth": "^2.6.0",
+    "@nextcloud/axios": "^2.5.2",
+    "@nextcloud/capabilities": "^1.2.1",
+    "@nextcloud/dialogs": "^7.3.0",
+    "@nextcloud/initial-state": "^3.0.0",
+    "@nextcloud/l10n": "^3.4.1",
+    "@nextcloud/logger": "^3.0.3",
+    "@nextcloud/router": "^3.1.0",
+    "@nextcloud/vue": "^9.6.0",
+    "dompurify": "^3.4.2",
+    "vue": "^3.5.34",
+    "vue-material-design-icons": "^5.3.1"
+  },
+  "browserslist": [
+    "extends @nextcloud/browserslist-config"
+  ],
+  "engines": {
+    "node": "^24.0.0",
+    "npm": "^11.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@nextcloud/browserslist-config": "^3.1.2",
+    "@nextcloud/eslint-config": "^9.0.0-rc.9",
+    "@nextcloud/stylelint-config": "^3.2.2",
+    "@nextcloud/vite-config": "^2.5.2",
+    "@vue/tsconfig": "^0.9.1",
+    "vite": "^7.3.2"
+  }
+}
