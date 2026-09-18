@@ -14,7 +14,7 @@
   "author": "Nextcloud GmbH and Nextcloud contributors and CDrive contributors",
   "type": "module",
   "scripts": {
-    "build": "node scripts/run-app-scripts.mjs build",
+    "build": "node scripts/run-app-scripts.mjs build --skip-if-tools-missing",
     "dev": "node scripts/run-app-scripts.mjs dev --parallel",
     "lint": "eslint apps --ext .js,.ts,.vue",
     "lint:fix": "eslint apps --ext .js,.ts,.vue --fix",

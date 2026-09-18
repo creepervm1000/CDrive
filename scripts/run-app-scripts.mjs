@@ -1,15 +1,29 @@
 #!/usr/bin/env node
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 
 const script = process.argv[2];
 const parallel = process.argv.includes('--parallel');
+const skipIfToolsMissing = process.argv.includes('--skip-if-tools-missing');
 
 if (!script) {
 	console.error('Usage: node scripts/run-app-scripts.mjs <script> [--parallel]');
 	process.exit(2);
+}
+
+// Some deployment builders run `npm prune --omit=dev` before `npm run build`.
+// Frontend build tools are dev dependencies, while this repository already
+// contains the compiled app assets, so production-only installs should not
+// fail merely because Vite/Webpack are unavailable.
+if (script === 'build' && skipIfToolsMissing) {
+	const tools = ['vite', 'webpack'];
+	const hasBuildTool = tools.some((tool) => existsSync(join(process.cwd(), 'node_modules', '.bin', tool)));
+	if (!hasBuildTool) {
+		console.log('Frontend build tools are not installed; keeping the committed frontend assets.');
+		process.exit(0);
+	}
 }
 
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
