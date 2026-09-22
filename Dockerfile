@@ -15,13 +15,18 @@ FROM dunglas/frankenphp:php8.3.33-trixie
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Retry the package installation: free-tier builders occasionally hit
+# transient DNS/mirror failures ("Temporary failure resolving 'deb.debian.org'").
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends \
-		libfreetype6-dev \
-		libjpeg62-turbo-dev \
-		libpng-dev \
-		libzip-dev \
-		unzip \
+	&& for i in 1 2 3; do \
+		apt-get install -y --no-install-recommends \
+			libfreetype6-dev \
+			libjpeg62-turbo-dev \
+			libpng-dev \
+			libzip-dev \
+			unzip \
+		&& break || { [ "$i" -lt 3 ] && { echo "apt-get failed (attempt $i), retrying..."; apt-get update; sleep 5; } || exit 1; }; \
+	done \
 	&& docker-php-ext-configure gd --with-freetype --with-jpeg \
 	&& docker-php-ext-install -j"$(nproc)" gd zip \
 	&& pecl install apcu \

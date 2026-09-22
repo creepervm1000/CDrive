@@ -26,6 +26,11 @@ if (script === 'build' && skipIfToolsMissing) {
 	}
 }
 
+// Vite apps in this repository may ship only their compiled assets in `js/`,
+// without the `index.html` entry point required to re-run the bundler.
+// Rebuilding those apps is both impossible and unnecessary, so skip them.
+const hasViteEntry = (app) => existsSync(join('apps', app, 'index.html'));
+
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const apps = readdirSync('apps', { withFileTypes: true })
 	.filter((entry) => entry.isDirectory())
@@ -38,6 +43,9 @@ const apps = readdirSync('apps', { withFileTypes: true })
 			return false;
 		}
 	})
+	// Skip apps without a bundler entry point; their compiled assets in `js/`
+	// are committed to the repository already.
+	.filter((app) => script !== 'build' || hasViteEntry(app))
 	.sort();
 
 if (apps.length === 0) {
