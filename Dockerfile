@@ -41,7 +41,10 @@ RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloade
 	&& mkdir -p config data custom_apps \
 	&& chown -R www-data:www-data /app
 
-COPY Caddyfile /etc/caddy/Caddyfile
+# FrankenPHP reads its config from /etc/frankenphp/Caddyfile (not /etc/caddy).
+# Our Caddyfile uses {$PORT:8080} directly, so no SERVER_NAME nesting is needed;
+# nested placeholders like SERVER_NAME="{$PORT:8080}" only expand one level and
+# make Caddy fail with: invalid port '8080}'.
+COPY Caddyfile /etc/frankenphp/Caddyfile
 
-ENV SERVER_NAME="{$PORT:8080}"
 EXPOSE 8080

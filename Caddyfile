@@ -1,4 +1,6 @@
-{$PORT:8080} {
+# Leading ":" makes Caddy listen on the port instead of treating the number
+# as a hostname (and trying to obtain a TLS certificate for it).
+:{$PORT:8080} {
 	root * /app
 	encode gzip
 
