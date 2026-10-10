@@ -809,9 +809,6 @@ class Push {
 				$this->printInfo('<info>Push notification sent successfully</info>');
 			}
 		} elseif ($status !== Http::STATUS_OK) {
-			if ($status === Http::STATUS_TOO_MANY_REQUESTS) {
-				$this->appConfig->setAppValueInt('rate_limit_reached', $this->timeFactory->getTime());
-			}
 			$error = $body && $bodyData === null ? $body : 'no reason given';
 			$this->printInfo('<error>Could not send notification to push server [' . $proxyServer . ']</error>', '<error>' . $error . '</error>');
 			$this->log->warning('Could not send notification to push server [{url}]: {error}', [
