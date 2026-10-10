@@ -2,7 +2,10 @@
 
 /**
  * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2026 CDrive contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * CDrive fork: no subscription key is ever sent to the app store.
  */
 
 namespace OC\App\AppStore\Fetcher;
@@ -84,15 +87,6 @@ abstract class Fetcher {
 			$options['headers'] = [
 				'If-None-Match' => $ETag,
 			];
-		}
-
-		if ($this->config->getSystemValueString('appstoreurl', self::APP_STORE_URL) === self::APP_STORE_URL) {
-			// If we have a valid subscription key, send it to the appstore
-			$subscriptionKey = $this->config->getAppValue('support', 'subscription_key');
-			if ($this->registry->delegateHasValidSubscription() && $subscriptionKey) {
-				$options['headers'] ??= [];
-				$options['headers']['X-NC-Subscription-Key'] = $subscriptionKey;
-			}
 		}
 
 		$client = $this->clientService->newClient();

@@ -7,7 +7,8 @@ declare(strict_types=1);
  * SPDX-FileCopyrightText: 2026 CDrive contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * CDrive fork: push fair-use paywall removed.
+ * CDrive fork: push fair-use paywall removed; no subscription key is sent
+ * to the hosted push proxy.
  */
 
 namespace OCA\Notifications;
@@ -699,7 +700,7 @@ class Push {
 
 		$subscriptionAwareServer = rtrim($this->appConfig->getAppValueString('subscription_aware_server', 'https://push-notifications.nextcloud.com'), '/');
 		if ($subscriptionAwareServer === 'https://push-notifications.nextcloud.com') {
-			$subscriptionKey = $this->globalAppConfig->getValueString('support', 'subscription_key');
+			$subscriptionKey = '';
 		} else {
 			$subscriptionKey = $this->appConfig->getAppValueString('push_subscription_key');
 			if ($subscriptionKey === '') {
