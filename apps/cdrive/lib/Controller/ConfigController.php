@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace OCA\Cdrive\Controller;
 
+use OC\Http\Client\CdriveEgressGuard;
 use OCA\Cdrive\Settings\Admin;
 use OCA\Theming\ThemingDefaults;
 use OCP\AppFramework\Controller;
@@ -33,48 +34,76 @@ class ConfigController extends Controller {
 		parent::__construct($appName, $request);
 	}
 
+	/**
+	 * Every form of the admin page posts only its own fields. A setting that
+	 * was not submitted (null) is left untouched, so saving one section can
+	 * never reset another one.
+	 */
 	#[AuthorizedAdminSetting(settings: Admin::class)]
-	public function save(string $mode = 'allowlist',
-		string $rulesOff = 'off',
-		string $allowSelf = 'on',
-		string $logging = 'on',
-		string $denylist = '',
-		string $allowedHosts = '',
-		string $appAllowlist = '',
-		string $appDenylist = '',
-		string $appBypass = '',
-		string $proxyList = '',
-		string $appProxy = '',
-		string $feedUrl = '',
-		string $lookupServer = ''): RedirectResponse {
-		$mode = strtolower(trim($mode)) === 'denylist' ? 'denylist' : 'allowlist';
-		$this->config->setSystemValue('cdrive_egress_mode', $mode);
-		$this->config->setSystemValue('cdrive_egress_disabled', strtolower(trim($rulesOff)) === 'on');
-		$this->config->setSystemValue('cdrive_egress_allow_self', strtolower(trim($allowSelf)) !== 'off');
-		$this->config->setSystemValue('cdrive_egress_log', strtolower(trim($logging)) !== 'off');
-		$this->config->setSystemValue('cdrive_egress_denylist', self::lines($denylist));
-		$this->config->setSystemValue('cdrive_egress_allowed_hosts', self::lines($allowedHosts));
-		$this->config->setSystemValue('cdrive_egress_app_allowlist', self::lines(strtolower($appAllowlist)));
-		$this->config->setSystemValue('cdrive_egress_app_denylist', self::lines(strtolower($appDenylist)));
-		$this->config->setSystemValue('cdrive_egress_app_bypass', self::lines(strtolower($appBypass)));
-		$this->config->setSystemValue('cdrive_proxy_list', self::lines($proxyList));
-		$this->config->setSystemValue('cdrive_app_proxy', self::mapLines($appProxy));
-		$this->config->setSystemValue('announcements.feed_url', trim($feedUrl));
-		$this->config->setSystemValue('lookup_server', trim($lookupServer));
+	public function save(
+		?string $mode = null,
+		?string $rulesOff = null,
+		?string $allowSelf = null,
+		?string $logging = null,
+		?string $denylist = null,
+		?string $allowedHosts = null,
+		?string $appAllowlist = null,
+		?string $appDenylist = null,
+		?string $appBypass = null,
+		?string $proxyList = null,
+		?string $appProxy = null,
+		?string $feedUrl = null,
+		?string $lookupServer = null,
+	): RedirectResponse {
+		if ($mode !== null) {
+			$this->config->setSystemValue('cdrive_egress_mode', CdriveEgressGuard::normalizeMode($mode));
+		}
+		if ($rulesOff !== null) {
+			$this->config->setSystemValue('cdrive_egress_disabled', strtolower(trim($rulesOff)) === 'on');
+		}
+		if ($allowSelf !== null) {
+			$this->config->setSystemValue('cdrive_egress_allow_self', strtolower(trim($allowSelf)) !== 'off');
+		}
+		if ($logging !== null) {
+			$this->config->setSystemValue('cdrive_egress_log', strtolower(trim($logging)) !== 'off');
+		}
+		if ($denylist !== null) {
+			$this->config->setSystemValue('cdrive_egress_denylist', self::lines($denylist));
+		}
+		if ($allowedHosts !== null) {
+			$this->config->setSystemValue('cdrive_egress_allowed_hosts', self::lines($allowedHosts));
+		}
+		if ($appAllowlist !== null) {
+			$this->config->setSystemValue('cdrive_egress_app_allowlist', self::lines(strtolower($appAllowlist)));
+		}
+		if ($appDenylist !== null) {
+			$this->config->setSystemValue('cdrive_egress_app_denylist', self::lines(strtolower($appDenylist)));
+		}
+		if ($appBypass !== null) {
+			$this->config->setSystemValue('cdrive_egress_app_bypass', self::lines(strtolower($appBypass)));
+		}
+		if ($proxyList !== null) {
+			$this->config->setSystemValue('cdrive_proxy_list', self::lines($proxyList));
+		}
+		if ($appProxy !== null) {
+			$this->config->setSystemValue('cdrive_app_proxy', self::mapLines($appProxy));
+		}
+		if ($feedUrl !== null) {
+			$this->config->setSystemValue('announcements.feed_url', trim($feedUrl));
+		}
+		if ($lookupServer !== null) {
+			$this->config->setSystemValue('lookup_server', trim($lookupServer));
+		}
 
-		return new RedirectResponse($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive'])));
+		return $this->backToSettings();
 	}
 
 	#[AuthorizedAdminSetting(settings: Admin::class)]
-	public function deps(string $showDeps = ''): RedirectResponse {
-		return new RedirectResponse($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive', 'showDeps' => trim($showDeps)])));
-	}
-
-	#[AuthorizedAdminSetting(settings: Admin::class)]
-	public function clearProxyBans(): RedirectResponse {		$this->config->deleteAppValue('cdrive_egress', 'proxy_banned');
+	public function clearProxyBans(): RedirectResponse {
+		$this->config->deleteAppValue('cdrive_egress', 'proxy_banned');
 		$this->config->deleteAppValue('cdrive_egress', 'proxy_failures');
 
-		return new RedirectResponse($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive'])));
+		return $this->backToSettings();
 	}
 
 	/**
@@ -103,6 +132,10 @@ class ConfigController extends Controller {
 		$this->appConfig->setAppValueInt('last_reinit', time());
 		$this->logger->info('CDrive reinit completed (' . implode(',', $did) . ')', ['app' => 'cdrive']);
 
+		return $this->backToSettings();
+	}
+
+	private function backToSettings(): RedirectResponse {
 		return new RedirectResponse($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive'])));
 	}
 
