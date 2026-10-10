@@ -7,7 +7,8 @@ declare(strict_types=1);
  * SPDX-FileCopyrightText: 2026 CDrive contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * CDrive fork: push fair-use paywall removed.
+ * CDrive fork: push fair-use paywall removed; no subscription key is sent
+ * to the hosted push proxy.
  */
 
 namespace OCA\Notifications;
@@ -699,7 +700,7 @@ class Push {
 
 		$subscriptionAwareServer = rtrim($this->appConfig->getAppValueString('subscription_aware_server', 'https://push-notifications.nextcloud.com'), '/');
 		if ($subscriptionAwareServer === 'https://push-notifications.nextcloud.com') {
-			$subscriptionKey = $this->globalAppConfig->getValueString('support', 'subscription_key');
+			$subscriptionKey = '';
 		} else {
 			$subscriptionKey = $this->appConfig->getAppValueString('push_subscription_key');
 			if ($subscriptionKey === '') {
@@ -809,9 +810,6 @@ class Push {
 				$this->printInfo('<info>Push notification sent successfully</info>');
 			}
 		} elseif ($status !== Http::STATUS_OK) {
-			if ($status === Http::STATUS_TOO_MANY_REQUESTS) {
-				$this->appConfig->setAppValueInt('rate_limit_reached', $this->timeFactory->getTime());
-			}
 			$error = $body && $bodyData === null ? $body : 'no reason given';
 			$this->printInfo('<error>Could not send notification to push server [' . $proxyServer . ']</error>', '<error>' . $error . '</error>');
 			$this->log->warning('Could not send notification to push server [{url}]: {error}', [

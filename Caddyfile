@@ -4,5 +4,23 @@
 	root * /app
 	encode gzip
 
+	# Caddy ignores .htaccess, so the rules Nextcloud ships there are repeated
+	# here. Without them the file server hands out the data directory (user
+	# files, the SQLite database, logs) and config/source files to anyone.
+	# `path` matching is case-insensitive and normalises "//" and "/../".
+	redir /.well-known/carddav /remote.php/dav/ 301
+	redir /.well-known/caldav /remote.php/dav/ 301
+
+	@forbidden path /data /data/* /config /config/* /lib /lib/* /3rdparty /3rdparty/* /templates /templates/* /build /build/* /tests /tests/* /occ* /autotest* /issue* /indie* /db_* /console* /composer.json /composer.lock /package.json /package-lock.json /Caddyfile
+	respond @forbidden 404
+
+	# Dotfiles (.htaccess, .user.ini, ...), except /.well-known which Nextcloud
+	# answers itself.
+	@dotfiles {
+		path /.*
+		not path /.well-known/*
+	}
+	respond @dotfiles 404
+
 	php_server
 }

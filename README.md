@@ -66,7 +66,7 @@ this repository.
 Every outbound HTTP request through the server HTTP client is checked
 before it leaves (`lib/private/Http/Client/CdriveEgressGuard.php`):
 - `cdrive_egress_mode`: `allowlist` (default — block everything not
-  allowed) or `denylist`.
+  allowed) or `denylist`. Any other value is treated as `allowlist`.
 - `cdrive_egress_denylist`: domains that are always blocked; each entry
   covers the domain **and all its subdomains**.
 - `cdrive_egress_allowed_hosts`: allowed hosts (domain + subdomains).
@@ -77,7 +77,11 @@ before it leaves (`lib/private/Http/Client/CdriveEgressGuard.php`):
   pass automatically; the denylist still wins.
 - Network log (on by default, capped): every allowed request with
   response status/duration/proxy, and every block with the reason and
-  no response attached.
+  no response attached. Credentials (`user:pass@`) in logged URLs and
+  proxies are masked; query strings are kept, so treat the log as
+  sensitive.
+- Redirects are checked hop by hop: a redirect to a blocked host is
+  refused even when the first URL was allowed.
 - Blocks degrade gracefully: denials surface as ordinary connection
   failures, so callers treat them as "offline" instead of erroring.
 
@@ -111,12 +115,21 @@ installer or `occ maintenance:install`. After installing, enable the
 CDrive settings app (`occ app:enable cdrive`) and open
 Administration → CDrive.
 
+The shipped `Caddyfile` (used by the `Dockerfile`, FrankenPHP) repeats the
+protections of Nextcloud's `.htaccess`, which Caddy ignores: `/data`,
+`/config`, `/lib`, `/3rdparty`, dotfiles, `occ` etc. answer 404 and
+`/.well-known/caldav|carddav` redirect to DAV. Keep these rules if you
+replace it, otherwise the data directory (user files, SQLite database,
+logs) is downloadable.
+
 ## Source layout notes (for developers)
 
 - New code: `lib/private/Http/Client/CdriveEgressGuard.php`,
   `apps/cdrive/` (settings UI), `apps/theming/lib/Themes/CDrive*.php`,
   `themes/cdrive/` (theme, logo set, AMOLED CSS), shipped background art
   in `apps/theming/img/background/cdrive-amoled-glow*.webp`.
+- `php scripts/test-cdrive-egress.php` runs the regression checks for the
+  egress firewall (no PHPUnit or database needed).
 - Apps with authoritative Composer classmaps need new classes registered
   in `apps/<app>/composer/composer/autoload_{classmap,static}.php`
   (server core autoloading falls back gracefully; app autoloaders with

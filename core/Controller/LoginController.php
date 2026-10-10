@@ -42,6 +42,7 @@ use OCP\IL10N;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
+use OCP\IUser;
 use OCP\IUserManager;
 use OCP\Security\Bruteforce\IThrottler;
 use OCP\Security\ITrustedDomainHelper;

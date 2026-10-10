@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\Settings\Controller;
 
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\NoSubAdminRequired;
@@ -22,7 +23,11 @@ class ReasonsController extends Controller {
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
 	public function getPdf(): DataDisplayResponse {
-		$data = file_get_contents(__DIR__ . '/../../data/Reasons to use Nextcloud.pdf');
+		$data = @file_get_contents(__DIR__ . '/../../data/Reasons to use Nextcloud.pdf');
+		if ($data === false) {
+			// CDrive does not ship the Nextcloud promo PDF.
+			return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
+		}
 
 		$resp = new DataDisplayResponse($data);
 		$resp->addHeader('Content-Type', 'application/pdf');

@@ -863,7 +863,8 @@ $CONFIG = [
 	 *   In allowlist mode nothing leaves the server unless the destination
 	 *   host is in ``cdrive_egress_allowed_hosts`` (domain + subdomains) or the
 	 *   calling app is in ``cdrive_egress_app_allowlist``. In denylist mode
-	 *   only the denylist applies.
+	 *   only the denylist applies. Any other value is treated as ``'allowlist'``,
+	 *   so a typo never opens the firewall. Redirect targets are checked too.
 	 *
 	 * App ids are lowercase, e.g. ``'dav'``, ``'theming'``, ``'weather_status'``;
 	 * server core itself is ``'core'``.
@@ -892,6 +893,7 @@ $CONFIG = [
 	 * block (no response attached) for Administration -> CDrive.
 	 * ``cdrive_egress_log_max`` (default ``500``, max ``5000``) caps entries.
 	 * NOTE: logged URLs may contain query-string tokens; visible to admins.
+	 * Credentials in a URL or proxy ("user:password@") are masked in the log.
 	 */
 	'cdrive_egress_mode' => 'allowlist',
 	'cdrive_egress_denylist' => [

@@ -13,18 +13,14 @@ declare(strict_types=1);
 
 namespace OCA\Support\Subscription;
 
-use OCA\Support\Service\SubscriptionService;
 use OCP\AppFramework\Services\IAppConfig;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\IConfig;
 use OCP\ServerVersion;
 use OCP\Support\Subscription\ISubscription;
 use OCP\Support\Subscription\ISupportedApps;
 
 class SubscriptionAdapter implements ISubscription, ISupportedApps {
 	public function __construct(
-		private readonly SubscriptionService $subscriptionService,
-		private readonly IConfig $config,
 		private readonly IAppConfig $appConfig,
 		private readonly ITimeFactory $timeFactory,
 		private readonly ServerVersion $serverVersion,
@@ -236,26 +232,9 @@ class SubscriptionAdapter implements ISubscription, ISupportedApps {
 	 */
 	#[\Override]
 	public function isHardUserLimitReached(): bool {
-		[
-			,,
-			$isInvalidSubscription,
-			$isOverLimit,
-			$subscriptionInfo
-		] = $this->subscriptionService->getSubscriptionInfo();
-
-		$configUserLimit = (int)$this->config->getAppValue('support', 'user-limit', '0');
-		if (
-			!$isInvalidSubscription
-			&& $configUserLimit > 0
-			&& $configUserLimit <= $this->subscriptionService->getUserCount()
-		) {
-			return true;
-		}
-
-		if (!isset($subscriptionInfo['hasHardUserLimit']) || $subscriptionInfo['hasHardUserLimit'] === false) {
-			return false;
-		}
-
-		return $isOverLimit;
+		// CDrive: there is no hard user limit, whatever subscription state
+		// (end_date, support.user-limit, last_response) an instance migrated
+		// from Nextcloud Enterprise may still carry.
+		return false;
 	}
 }

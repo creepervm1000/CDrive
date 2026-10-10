@@ -10,9 +10,10 @@ declare(strict_types=1);
 
 namespace OCA\Cdrive\Settings;
 
+use OC\Http\Client\CdriveEgressGuard;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IAppConfig;
-use OCP\App\IAppManager;
 use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -45,10 +46,11 @@ class Admin implements IDelegatedSettings {
 
 		$failures = json_decode($this->config->getAppValue('cdrive_egress', 'proxy_failures', '[]'), true);
 		$banned = json_decode($this->config->getAppValue('cdrive_egress', 'proxy_banned', '[]'), true);
-		$netlog = json_decode($this->config->getAppValue('cdrive_egress', 'netlog', '[]'), true);
+		$depsQuery = trim((string)$this->request->getParam('showDeps', ''));
+		$showDiagnostics = $this->request->getParam('showDiagnostics', '') === '1';
 
 		$params = [
-			'mode' => $this->config->getSystemValueString('cdrive_egress_mode', 'allowlist'),
+			'mode' => CdriveEgressGuard::normalizeMode($this->config->getSystemValueString('cdrive_egress_mode', CdriveEgressGuard::MODE_ALLOWLIST)),
 			'rulesOff' => $this->config->getSystemValue('cdrive_egress_disabled', false) ? true : false,
 			'allowSelf' => $this->config->getSystemValue('cdrive_egress_allow_self', true) ? true : false,
 			'logging' => $this->config->getSystemValue('cdrive_egress_log', true) ? true : false,
@@ -61,18 +63,18 @@ class Admin implements IDelegatedSettings {
 			'lookupServer' => $this->config->getSystemValueString('lookup_server', ''),
 			'proxyFailures' => is_array($failures) ? $failures : [],
 			'proxyBanned' => is_array($banned) ? $banned : [],
-			'netlog' => is_array($netlog) ? array_slice(array_values($netlog), 0, 100) : [],
+			'netlog' => (new CdriveEgressGuard($this->config))->getTrafficLog(100),
 			'appDenylist' => implode("\n", $this->stringList('cdrive_egress_app_denylist')),
 			'appBypass' => implode("\n", $this->stringList('cdrive_egress_app_bypass')),
-			'depsQuery' => trim((string)$this->request->getParam('showDeps', '')),
-			'depsResult' => $this->lookupDeps(trim((string)$this->request->getParam('showDeps', ''))),
+			'depsQuery' => $depsQuery,
+			'depsResult' => $this->lookupDeps($depsQuery),
 			'saveUrl' => $this->urlGenerator->linkToRoute('cdrive.config.save'),
-			'depsUrl' => $this->urlGenerator->linkToRoute('cdrive.config.deps'),
+			'pageUrl' => $this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive']),
 			'clearBansUrl' => $this->urlGenerator->linkToRoute('cdrive.config.clearProxyBans'),
 			'reinitUrl' => $this->urlGenerator->linkToRoute('cdrive.config.reinit'),
 			'lastReinit' => $this->appConfig->getAppValueInt('last_reinit'),
-			'showDiagnostics' => $this->request->getParam('showDiagnostics', '') === '1',
-			'diagnostics' => $this->request->getParam('showDiagnostics', '') === '1' ? $this->getDiagnostics() : [],
+			'showDiagnostics' => $showDiagnostics,
+			'diagnostics' => $showDiagnostics ? $this->getDiagnostics() : [],
 			'diagnosticsUrl' => $this->urlGenerator->linkToRoute('settings.AdminSettings.index', ['section' => 'cdrive', 'showDiagnostics' => '1']),
 		];
 
@@ -96,9 +98,11 @@ class Admin implements IDelegatedSettings {
 
 	#[\Override]
 	public function getAuthorizedAppConfig(): array {
+		// Exact keys (the delegated app config API takes keys or /regex/ patterns,
+		// not bare regex bodies): only what the admin page itself manages.
 		return [
-			'cdrive' => ['.*'],
-			'cdrive_egress' => ['.*'],
+			'cdrive' => ['last_reinit'],
+			'cdrive_egress' => ['proxy_banned', 'proxy_failures'],
 		];
 	}
 
