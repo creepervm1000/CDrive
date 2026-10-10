@@ -1,5 +1,6 @@
 config/config.php
-data/
+/data/
 *.log
 *~
 .DS_Store
+node_modules/
