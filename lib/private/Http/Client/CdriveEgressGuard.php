@@ -16,6 +16,9 @@ declare(strict_types=1);
  *   host is in `cdrive_egress_allowed_hosts` (domain + subdomains) or the
  *   calling app is in `cdrive_egress_app_allowlist`. The admin must
  *   explicitly allow traffic. In denylist mode only the denylist applies.
+ *   Any other mode value is treated as 'allowlist' (fail closed).
+ * - Redirects: every redirect target passes the same checks (see
+ *   Client::buildRequestOptions()).
  *
  * See config/config.sample.php for documented examples.
  *
@@ -24,9 +27,11 @@ declare(strict_types=1);
  * - Allowed requests are logged by the trafficLogger() Guzzle middleware
  *   with method, URL, calling app, HTTP status, duration and proxy used.
  * - `cdrive_egress_log` (default true) toggles logging;
- *   `cdrive_egress_log_max` (default 500) caps the ring buffer.
- *   NOTE: logged URLs can contain tokens/credentials from query strings.
- *   The log is only visible to admins.
+ *   `cdrive_egress_log_max` (default 500) caps the ring buffer. The log is
+ *   a lazy app config value, so it is not loaded on every request.
+ *   NOTE: logged URLs can contain tokens from query strings; credentials in
+ *   the "user:pass@" part of URLs and proxies are masked. The log is only
+ *   visible to admins.
  *
  * Per-app forced proxying (anti-tracking):
  * - `cdrive_proxy_list`: global list of HTTP/HTTPS proxy URLs.
@@ -45,7 +50,9 @@ namespace OC\Http\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use OCP\Http\Client\LocalServerException;
+use OCP\IAppConfig;
 use OCP\IConfig;
+use OCP\Server;
 use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 
@@ -59,11 +66,53 @@ class CdriveEgressGuard {
 	private const PROXY_FAILURE_THRESHOLD = 5;
 
 	private const APP_VALUES_APP = 'cdrive_egress';
+	private const NETLOG_KEY = 'netlog';
+	/** Longest URL kept in the network log, to bound the size of the stored log. */
+	private const LOG_URL_MAX_LENGTH = 500;
+
+	private ?IAppConfig $appConfig;
 
 	public function __construct(
 		private IConfig $config,
 		private ?LoggerInterface $logger = null,
+		?IAppConfig $appConfig = null,
 	) {
+		$this->appConfig = $appConfig;
+	}
+
+	/**
+	 * Anything but an explicit 'denylist' is the (restrictive) allowlist
+	 * mode, so a typo in the config never opens the firewall.
+	 */
+	public static function normalizeMode(string $mode): string {
+		return strtolower(trim($mode)) === self::MODE_DENYLIST ? self::MODE_DENYLIST : self::MODE_ALLOWLIST;
+	}
+
+	/**
+	 * Lowercase host without port, brackets around IPv6 literals or a
+	 * trailing dot, so URL hosts and configured entries compare equal.
+	 */
+	public static function normalizeHost(string $host): string {
+		$host = strtolower(trim($host));
+		if (str_starts_with($host, '[')) {
+			$end = strpos($host, ']');
+			$host = $end === false ? substr($host, 1) : substr($host, 1, $end - 1);
+		} elseif (substr_count($host, ':') === 1) {
+			$host = explode(':', $host, 2)[0];
+		}
+		return rtrim($host, '.');
+	}
+
+	/**
+	 * Strips credentials ("user:pass@") from a URL or proxy string before it
+	 * is logged or stored.
+	 */
+	public static function redactUserInfo(string $url): string {
+		return preg_replace('#^((?:[a-z][a-z0-9+.\-]*:)?//)?[^/?\#\s]*@#i', '$1***@', $url) ?? $url;
+	}
+
+	private function appConfig(): IAppConfig {
+		return $this->appConfig ??= Server::get(IAppConfig::class);
 	}
 
 	/**
@@ -96,14 +145,14 @@ class CdriveEgressGuard {
 		if (!is_string($host) || $host === '') {
 			throw new LocalServerException('CDrive egress blocked: could not detect any host');
 		}
-		$host = strtolower(rtrim($host, '.'));
+		$host = self::normalizeHost($host);
 
 		// Per-app kill switch: a listed app gets no network at all,
 		// regardless of any allow rule below. A bypassed app skips every
 		// rule below (but never the kill switch). Context is detected
 		// lazily so requests pay for a backtrace only when a list is used.
-		$killList = $this->getDomainList('cdrive_egress_app_denylist');
-		$bypassList = $this->getDomainList('cdrive_egress_app_bypass');
+		$killList = $this->getAppList('cdrive_egress_app_denylist');
+		$bypassList = $this->getAppList('cdrive_egress_app_bypass');
 		if ($killList !== [] || $bypassList !== []) {
 			$ctx = $this->detectContext();
 			if (in_array($ctx['app'], $killList, true)) {
@@ -124,7 +173,7 @@ class CdriveEgressGuard {
 			}
 		}
 
-		if ($this->config->getSystemValueString('cdrive_egress_mode', self::MODE_ALLOWLIST) !== self::MODE_ALLOWLIST) {
+		if (self::normalizeMode($this->config->getSystemValueString('cdrive_egress_mode', self::MODE_ALLOWLIST)) === self::MODE_DENYLIST) {
 			return;
 		}
 
@@ -146,7 +195,7 @@ class CdriveEgressGuard {
 		}
 
 		$app = $this->detectCallingApp();
-		if (in_array($app, $this->getDomainList('cdrive_egress_app_allowlist'), true)) {
+		if (in_array($app, $this->getAppList('cdrive_egress_app_allowlist'), true)) {
 			return;
 		}
 
@@ -167,7 +216,8 @@ class CdriveEgressGuard {
 	 * Exact match or any subdomain match (case-insensitive).
 	 */
 	public function hostMatches(string $host, string $entry): bool {
-		$entry = strtolower(rtrim(trim($entry), '.'));
+		$host = self::normalizeHost($host);
+		$entry = self::normalizeHost($entry);
 		if ($entry === '') {
 			return false;
 		}
@@ -195,44 +245,47 @@ class CdriveEgressGuard {
 		foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $frame) {
 			$class = $frame['class'] ?? '';
 			$function = $frame['function'] ?? '';
-			$functionLower = strtolower($function);
-			if ($class !== '') {
-				if ($class === 'OC\\Http\\Client\\Client' && isset(self::CLIENT_METHODS[$functionLower])) {
-					if ($method === '') {
-						$method = $functionLower === 'sendrequest' ? 'SEND' : strtoupper((string)preg_replace('/async$/i', '', $functionLower));
-					}
-					continue;
+			$file = $frame['file'] ?? '';
+			if ($class === 'OC\\Http\\Client\\Client' && isset(self::CLIENT_METHODS[strtolower($function)])) {
+				if ($method === '') {
+					$functionLower = strtolower($function);
+					$method = $functionLower === 'sendrequest' ? 'SEND' : strtoupper((string)preg_replace('/async$/i', '', $functionLower));
 				}
-				// Skip our own HTTP client stack.
-				if (str_starts_with($class, 'OC\\Http\\Client\\')) {
-					continue;
+				// The file of this frame is where the HTTP client was called from.
+				if ($app === 'core') {
+					$app = self::appIdFromPath($file) ?? 'core';
 				}
-			}
-			if ($app === 'core') {
-				// File path first: the app directory is the authoritative
-				// app id (namespaces don't always match it, e.g.
-				// OCA\WeatherStatus lives in apps/weather_status/).
-				$file = $frame['file'] ?? '';
-				if ($file !== '' && preg_match('#/(?:apps|custom_apps|apps-extra)/([^/]+)/#', $file, $m)) {
-					$app = strtolower($m[1]);
-				} elseif ($class !== '' && str_starts_with($class, 'OCA\\')) {
-					// Namespaced class or function call (no class frame).
-					$parts = explode('\\', $class !== '' ? $class : $function);
-					if (isset($parts[1]) && $parts[1] !== '') {
-						$app = strtolower($parts[1]);
-					}
-				} elseif ($class === '' && str_starts_with($function, 'OCA\\')) {
-					$parts = explode('\\', $function);
-					if (isset($parts[1]) && $parts[1] !== '') {
-						$app = strtolower($parts[1]);
-					}
-				}
+			} elseif ($app === 'core' && !str_starts_with($class, 'OC\\Http\\Client\\')) {
+				// Skips our own HTTP client stack. The file path comes first: the
+				// app directory is the authoritative app id.
+				$app = self::appIdFromPath($file)
+					?? self::appIdFromClass($class !== '' ? $class : $function)
+					?? 'core';
 			}
 			if ($app !== 'core' && $method !== '') {
 				break;
 			}
 		}
 		return ['app' => $app, 'method' => $method === '' ? 'REQUEST' : $method];
+	}
+
+	private static function appIdFromPath(string $file): ?string {
+		if ($file !== '' && preg_match('#/(?:apps|custom_apps|apps-extra)/([^/]+)/#', $file, $m) === 1) {
+			return strtolower($m[1]);
+		}
+		return null;
+	}
+
+	/**
+	 * Last resort for code outside any app directory: the namespace, which
+	 * does not always match the app id (OCA\WeatherStatus is weather_status).
+	 */
+	private static function appIdFromClass(string $class): ?string {
+		if (!str_starts_with($class, 'OCA\\')) {
+			return null;
+		}
+		$namespace = explode('\\', $class)[1] ?? '';
+		return $namespace !== '' ? strtolower($namespace) : null;
 	}
 
 	/**
@@ -247,31 +300,39 @@ class CdriveEgressGuard {
 		if ($cliUrl !== '') {
 			$h = parse_url($cliUrl, PHP_URL_HOST);
 			if (is_string($h) && $h !== '') {
-				$hosts[] = strtolower(rtrim($h, '.'));
+				$hosts[] = self::normalizeHost($h);
 			}
 		}
 		$overwriteHost = $this->config->getSystemValueString('overwritehost', '');
 		if ($overwriteHost !== '') {
-			$hosts[] = strtolower(rtrim($overwriteHost, '.'));
+			$hosts[] = self::normalizeHost($overwriteHost);
 		}
 		$trusted = $this->config->getSystemValue('trusted_domains', []);
 		if (is_array($trusted)) {
 			foreach ($trusted as $entry) {
-				if (!is_string($entry) || trim($entry) === '') {
-					continue;
-				}
-				$entry = strtolower(trim($entry));
-				// Strip a single :port suffix (leave IPv6 literals alone).
-				if (substr_count($entry, ':') === 1) {
-					$entry = explode(':', $entry)[0];
-				}
-				$entry = trim($entry, '[]');
-				if ($entry !== '') {
-					$hosts[] = rtrim($entry, '.');
+				if (is_string($entry) && trim($entry) !== '') {
+					$hosts[] = self::normalizeHost($entry);
 				}
 			}
 		}
-		return array_values(array_unique($hosts));
+		return array_values(array_unique(array_filter($hosts, static fn (string $h): bool => $h !== '')));
+	}
+
+	/**
+	 * Hostname from a configured entry. Tolerates the usual copy/paste forms
+	 * ("https://tracker.example/", "*.tracker.example") so an entry is never
+	 * silently ineffective.
+	 */
+	private static function hostFromEntry(string $entry): string {
+		$entry = trim($entry);
+		if (str_contains($entry, '://')) {
+			$parsed = parse_url($entry, PHP_URL_HOST);
+			$entry = is_string($parsed) ? $parsed : '';
+		}
+		if (str_starts_with($entry, '*.')) {
+			$entry = substr($entry, 2);
+		}
+		return self::normalizeHost($entry);
 	}
 
 	/**
@@ -284,8 +345,26 @@ class CdriveEgressGuard {
 		}
 		$list = [];
 		foreach ($value as $entry) {
+			$host = is_string($entry) ? self::hostFromEntry($entry) : '';
+			if ($host !== '') {
+				$list[] = $host;
+			}
+		}
+		return $list;
+	}
+
+	/**
+	 * @return list<string> lowercase app ids
+	 */
+	private function getAppList(string $key): array {
+		$value = $this->config->getSystemValue($key, []);
+		if (!is_array($value)) {
+			return [];
+		}
+		$list = [];
+		foreach ($value as $entry) {
 			if (is_string($entry) && trim($entry) !== '') {
-				$list[] = strtolower(rtrim(trim($entry), '.'));
+				$list[] = strtolower(trim($entry));
 			}
 		}
 		return $list;
@@ -410,7 +489,7 @@ class CdriveEgressGuard {
 				$this->writeJsonAppValue('proxy_banned', $banned);
 				$this->logger?->warning('CDrive nuked proxy {proxy} after {count} failures within 6 hours', [
 					'app' => 'cdrive_egress',
-					'proxy' => $proxy,
+					'proxy' => self::redactUserInfo($proxy),
 					'count' => count($stamps),
 				]);
 			}
@@ -464,30 +543,38 @@ class CdriveEgressGuard {
 		if (!$this->isLoggingEnabled()) {
 			return;
 		}
-		$max = $this->config->getSystemValueInt('cdrive_egress_log_max', 500);
+		$max = min(5000, $this->config->getSystemValueInt('cdrive_egress_log_max', 500));
 		if ($max < 1) {
 			return;
 		}
-		if ($max > 5000) {
-			$max = 5000;
+		// Best effort: a storage problem must neither break the request being
+		// logged nor hide the verdict of a blocked one.
+		try {
+			$log = $this->readTrafficLog();
+			array_unshift($log, [
+				't' => time(),
+				'app' => $app,
+				'method' => $method,
+				'url' => mb_substr(self::redactUserInfo($uri), 0, self::LOG_URL_MAX_LENGTH),
+				'status' => $status,
+				'code' => $code,
+				'ms' => $ms,
+				'proxy' => $proxy !== null ? self::redactUserInfo($proxy) : null,
+				'error' => $error !== null ? mb_substr(self::redactUserInfoInText($error), 0, 200) : null,
+			]);
+			// Lazy: the log can be large and must not be loaded on every request.
+			$this->appConfig()->setValueString(
+				self::APP_VALUES_APP,
+				self::NETLOG_KEY,
+				json_encode(array_slice($log, 0, $max), JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?: '[]',
+				lazy: true,
+			);
+		} catch (\Throwable $e) {
+			$this->logger?->warning('CDrive egress: could not write the network log', [
+				'app' => 'cdrive_egress',
+				'exception' => $e,
+			]);
 		}
-		$raw = $this->config->getAppValue(self::APP_VALUES_APP, 'netlog', '[]');
-		$log = json_decode($raw, true);
-		if (!is_array($log)) {
-			$log = [];
-		}
-		array_unshift($log, [
-			't' => time(),
-			'app' => $app,
-			'method' => $method,
-			'url' => $uri,
-			'status' => $status,
-			'code' => $code,
-			'ms' => $ms,
-			'proxy' => $proxy,
-			'error' => $error !== null ? mb_substr($error, 0, 200) : null,
-		]);
-		$this->config->setAppValue(self::APP_VALUES_APP, 'netlog', json_encode(array_slice($log, 0, $max)));
 	}
 
 	public function isLoggingEnabled(): bool {
@@ -496,12 +583,22 @@ class CdriveEgressGuard {
 
 	/** @return list<array<string, mixed>> newest first */
 	public function getTrafficLog(int $limit = 100): array {
-		$raw = $this->config->getAppValue(self::APP_VALUES_APP, 'netlog', '[]');
+		return array_slice($this->readTrafficLog(), 0, max(1, $limit));
+	}
+
+	/** @return list<array<string, mixed>> */
+	private function readTrafficLog(): array {
+		$raw = $this->appConfig()->getValueString(self::APP_VALUES_APP, self::NETLOG_KEY, '[]', lazy: true);
 		$log = json_decode($raw, true);
-		if (!is_array($log)) {
-			return [];
-		}
-		return array_slice(array_values($log), 0, max(1, $limit));
+		return is_array($log) ? array_values($log) : [];
+	}
+
+	/**
+	 * Same as redactUserInfo() for free text such as exception messages, which
+	 * embed the full request URL.
+	 */
+	private static function redactUserInfoInText(string $text): string {
+		return preg_replace('#([a-z][a-z0-9+.\-]*://)[^/?\#\s]*@#i', '$1***@', $text) ?? $text;
 	}
 
 	private function shortError(mixed $reason): string {

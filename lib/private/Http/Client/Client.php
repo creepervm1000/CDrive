@@ -26,6 +26,7 @@ use OCP\Security\IRemoteHostValidator;
 use OCP\ServerVersion;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerInterface;
 use function parse_url;
 
@@ -59,19 +60,21 @@ class Client implements IClient {
 		$defaults['curl'][\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2TLS;
 
 		$options['nextcloud']['allow_local_address'] = $this->isLocalAddressAllowed($options);
-		if ($options['nextcloud']['allow_local_address'] === false) {
-			$onRedirectFunction = function (
-				\Psr\Http\Message\RequestInterface $request,
-				\Psr\Http\Message\ResponseInterface $response,
-				\Psr\Http\Message\UriInterface $uri,
-			) use ($options): void {
-				$this->preventLocalAddress($uri->__toString(), $options);
-			};
 
-			$defaults[RequestOptions::ALLOW_REDIRECTS] = [
-				'on_redirect' => $onRedirectFunction
-			];
-		}
+		// CDrive: redirect targets must always pass the egress firewall, also
+		// when local addresses are allowed (preventLocalAddress() then only
+		// skips the local-address validation).
+		$onRedirectFunction = function (
+			\Psr\Http\Message\RequestInterface $request,
+			\Psr\Http\Message\ResponseInterface $response,
+			\Psr\Http\Message\UriInterface $uri,
+		) use ($options): void {
+			$this->preventLocalAddress($uri->__toString(), $options);
+		};
+
+		$defaults[RequestOptions::ALLOW_REDIRECTS] = [
+			'on_redirect' => $onRedirectFunction
+		];
 
 		// Only add RequestOptions::PROXY if Nextcloud is explicitly
 		// configured to use a proxy. This is needed in order not to override
@@ -80,7 +83,14 @@ class Client implements IClient {
 			$defaults[RequestOptions::PROXY] = $proxy;
 		}
 
+		$callerRedirects = $options[RequestOptions::ALLOW_REDIRECTS] ?? null;
 		$options = array_merge($defaults, $options);
+
+		// A caller-supplied allow_redirects replaces the default wholesale and
+		// would drop the redirect check, so wrap it instead.
+		if ($callerRedirects !== null) {
+			$options[RequestOptions::ALLOW_REDIRECTS] = $this->withRedirectGuard($callerRedirects, $onRedirectFunction);
+		}
 
 		// CDrive forced per-app proxy: overrides any other proxy setting.
 		// Only reached for requests that already passed the egress firewall,
@@ -176,6 +186,30 @@ class Client implements IClient {
 
 	private function getEgressGuard(): CdriveEgressGuard {
 		return $this->egressGuard ??= new CdriveEgressGuard($this->config, $this->logger);
+	}
+
+	/**
+	 * Adds the redirect guard to a caller-supplied `allow_redirects` value
+	 * while keeping the caller's own on_redirect callback.
+	 */
+	private function withRedirectGuard(mixed $redirects, \Closure $guard): mixed {
+		// Disabled (false/empty) or invalid values are left for Guzzle to handle.
+		if (empty($redirects) || ($redirects !== true && !is_array($redirects))) {
+			return $redirects;
+		}
+		$redirects = is_array($redirects) ? $redirects : [];
+		$callerHook = $redirects['on_redirect'] ?? null;
+		$redirects['on_redirect'] = function (
+			RequestInterface $request,
+			ResponseInterface $response,
+			UriInterface $uri,
+		) use ($guard, $callerHook): void {
+			$guard($request, $response, $uri);
+			if (is_callable($callerHook)) {
+				$callerHook($request, $response, $uri);
+			}
+		};
+		return $redirects;
 	}
 
 	private function isLocalAddressAllowed(array $options) : bool {
